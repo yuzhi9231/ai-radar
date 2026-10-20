@@ -1,7 +1,7 @@
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllArticles } from "@/lib/api-client";
 import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 export default async function ArticlesPage() {
 	const articles = await getAllArticles();
