@@ -1,0 +1,64 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+const navItems = [
+	{ href: "/", label: "首页" },
+	{ href: "/articles", label: "文章" },
+	{ href: "/briefs", label: "每日简报" },
+	{ href: "/about", label: "关于" },
+];
+
+export function MobileNav() {
+	const [open, setOpen] = useState(false);
+
+	useEffect(() => {
+		if (!open) return;
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setOpen(false);
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [open]);
+
+	return (
+		<>
+			{/* Hamburger button */}
+			<button
+				type="button"
+				aria-label={open ? "关闭菜单" : "打开菜单"}
+				aria-expanded={open}
+				onClick={() => setOpen(!open)}
+				className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+			>
+				{open ? "✕" : "☰"}
+			</button>
+
+			{/* Full-screen overlay */}
+			{open && (
+				/* biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click-to-dismiss is standard UX */
+				<div
+					className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
+					onClick={() => setOpen(false)}
+					aria-hidden="true"
+				>
+					<nav
+						className="mt-24 flex flex-col items-center gap-6 text-lg"
+						aria-label="移动导航"
+					>
+						{navItems.map((item) => (
+							<a
+								key={item.href}
+								href={item.href}
+								onClick={() => setOpen(false)}
+								className="text-muted-foreground transition-colors hover:text-foreground"
+							>
+								{item.label}
+							</a>
+						))}
+					</nav>
+				</div>
+			)}
+		</>
+	);
+}
