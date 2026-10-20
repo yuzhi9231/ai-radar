@@ -2,6 +2,14 @@
 
 const BASE = "/api";
 
+interface ArticleFilters {
+	source?: string;
+	category?: string;
+	sort?: "newest" | "oldest" | "importance";
+	limit?: number;
+	offset?: number;
+}
+
 async function json<T>(url: string): Promise<T> {
 	const res = await fetch(`${BASE}${url}`, { cache: "no-store" });
 	if (!res.ok) {
@@ -10,9 +18,24 @@ async function json<T>(url: string): Promise<T> {
 	return res.json();
 }
 
-export async function getAllArticles(): Promise<any[]> {
-	return json<any[]>("/articles");
+export async function getAllArticles(
+	filters?: ArticleFilters,
+): Promise<{ articles: any[]; total: number; limit: number; offset: number }> {
+	if (!filters) {
+		const articles = await json<any[]>("/articles");
+		return { articles, total: articles.length, limit: articles.length, offset: 0 };
+	}
+	const params = new URLSearchParams();
+	if (filters.source) params.set("source", filters.source);
+	if (filters.category) params.set("category", filters.category);
+	if (filters.sort) params.set("sort", filters.sort);
+	if (filters.limit) params.set("limit", String(filters.limit));
+	if (filters.offset) params.set("offset", String(filters.offset));
+	return json<{ articles: any[]; total: number; limit: number; offset: number }>(
+		`/articles?${params.toString()}`,
+	);
 }
+
 
 export async function getArticleById(id: string): Promise<any> {
 	return json<any>(`/articles/${id}`);

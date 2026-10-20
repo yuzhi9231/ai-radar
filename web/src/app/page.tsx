@@ -1,4 +1,4 @@
-import { ArticleCard } from "@/components/article-card";
+import { ArticleGrid } from "@/components/article-grid";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllArticles, getTodayBrief } from "@/lib/api-client";
@@ -6,11 +6,8 @@ import { formatDate } from "@/lib/utils";
 
 export default async function HomePage() {
 	const brief = await getTodayBrief();
-	const allArticles = await getAllArticles();
+	const { articles: allArticles } = await getAllArticles();
 	const today = new Date().toISOString().split("T")[0];
-
-	// Show up to 12 most recent articles in the waterfall grid
-	const recentArticles = allArticles.slice(0, 12);
 
 	return (
 		<div className="space-y-8">
@@ -101,19 +98,7 @@ export default async function HomePage() {
 					</a>
 				</div>
 
-				{recentArticles.length === 0 ? (
-					<Card>
-						<CardContent className="pt-6 text-center text-sm text-muted-foreground">
-							暂无文章，等待数据采集...
-						</CardContent>
-					</Card>
-				) : (
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{recentArticles.map((article: any) => (
-							<ArticleCard key={article.id} article={article} />
-						))}
-					</div>
-				)}
+				<ArticleGrid initialArticles={allArticles.slice(0, 12)} />
 			</div>
 
 			{/* Stats Bar */}
