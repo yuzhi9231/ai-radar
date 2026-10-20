@@ -1,0 +1,21 @@
+---
+name: pre-commit
+description: Git pre-commit hooks (ruff for Python, biome for TS/JS)
+---
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/biomejs/biome
+    rev: 1.9.4
+    hooks:
+      - id: biome-format
+        files: \.(js|jsx|ts|tsx)$
+      - id: biome-lint
+        files: \.(js|jsx|ts|tsx)$
+        args: [--fix, --unsafe]

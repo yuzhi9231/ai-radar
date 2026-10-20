@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
-from .collectors import collect_all, COLLECTORS
+from .ai import process_article
+from .collectors import collect_all
 from .db import (
+    create_pipeline_run,
     get_all_articles,
     get_connection,
     upsert_article,
     upsert_processed_article,
-    create_pipeline_run,
 )
 from .dedup import deduplicate
-from .models import Article, ArticleSource, PipelineRun
-from .ai import process_article
+from .models import PipelineRun
 
 
 def run_pipeline() -> PipelineRun:
@@ -23,8 +23,8 @@ def run_pipeline() -> PipelineRun:
     run.started_at = datetime.utcnow()
 
     # Create pipeline run record
-    run_id = create_pipeline_run(run)
-    conn = get_connection()
+    create_pipeline_run(run)
+    get_connection()
 
     try:
         # Step 1: Collect from all sources
@@ -66,7 +66,7 @@ def run_pipeline() -> PipelineRun:
                 processed = process_article(article)
                 upsert_processed_article(processed)
                 processed_count += 1
-            except Exception as e:
+            except Exception:
                 # AI processing failure should not lose the article
                 pass
 
@@ -86,6 +86,7 @@ def run_pipeline() -> PipelineRun:
 def run_manual() -> None:
     """Run the pipeline and print results."""
     import os
+
     os.environ.setdefault("USE_MOCK_AI", "true")  # Default to mock for manual runs
 
     print(f"[{datetime.utcnow().isoformat()}] Starting manual collection...")

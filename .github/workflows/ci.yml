@@ -10,6 +10,27 @@ permissions:
   contents: read
 
 jobs:
+  # ── Python lint ─────────────────────────────────────────────
+  python-lint:
+    name: Python Lint (ruff)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint + format check
+        run: ruff check . && ruff format --check .
+
   # ── Collector (Python) ──────────────────────────────────────
   collector:
     name: Collector (Python)
@@ -56,6 +77,29 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # ── Web lint (Biome) ────────────────────────────────────────
+  web-lint:
+    name: Web Lint (Biome)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Format check
+        run: npx biome format .
+
+      - name: Lint check
+        run: npx biome check src/
 
   # ── Docker Compose validation ───────────────────────────────
   docker-compose:

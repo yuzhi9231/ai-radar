@@ -8,9 +8,7 @@ Collectors for:
 
 from __future__ import annotations
 
-import time
 from datetime import datetime, timezone
-from typing import Optional
 
 import httpx
 from feedparser import parse as parse_rss
@@ -33,14 +31,17 @@ def _parse_rss_feed(url: str, source_name: str, source: ArticleSource) -> list[A
             for entry in feed.entries:
                 published = None
                 if hasattr(entry, "published_parsed") and entry.published_parsed:
-                    published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                    published = datetime(
+                        *entry.published_parsed[:6], tzinfo=timezone.utc
+                    )
 
                 article = Article(
                     source_url=entry.get("link", ""),
                     source_name=source_name,
                     source=source,
                     raw_title=entry.get("title", "Untitled"),
-                    raw_description=entry.get("summary", "") or entry.get("description", ""),
+                    raw_description=entry.get("summary", "")
+                    or entry.get("description", ""),
                     published_at=published,
                     language=entry.get("language", "en"),
                 )
@@ -115,6 +116,6 @@ def collect_all() -> dict[str, list[Article]]:
         try:
             articles = collect_fn()
             results[source.value] = articles
-        except Exception as e:
+        except Exception:
             results[source.value] = []
     return results

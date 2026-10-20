@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -35,8 +34,12 @@ class Article(BaseModel):
     source_name: str = Field(description="Name of the data source")
     source: ArticleSource = Field(description="Source type")
     raw_title: str = Field(description="Original article title")
-    raw_description: str = Field(default="", description="Original article description/summary")
-    published_at: Optional[datetime] = Field(default=None, description="Original publication time")
+    raw_description: str = Field(
+        default="", description="Original article description/summary"
+    )
+    published_at: Optional[datetime] = Field(
+        default=None, description="Original publication time"
+    )
     fetched_at: datetime = Field(default_factory=datetime.utcnow)
     language: str = Field(default="en", description="Detected language code")
 
