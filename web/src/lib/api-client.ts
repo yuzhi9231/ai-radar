@@ -55,8 +55,11 @@ export async function getStats(): Promise<any> {
 	return json<any>("/stats");
 }
 
-export async function getTodayBrief(): Promise<any | null> {
-	const today = new Date().toISOString().split("T")[0];
-	const data = await json<any>(`/briefs?date=${today}`);
+export async function getBriefByDate(date: string): Promise<any | null> {
+	const data = await json<any>(`/briefs?date=${date}`);
 	return data.brief || null;
+}
+
+export async function getTodayBrief(): Promise<any | null> {
+	return getBriefByDate(new Date().toISOString().split("T")[0]);
 }
