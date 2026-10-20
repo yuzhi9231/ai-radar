@@ -21,6 +21,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/better-sqlite3": "^7.6.13"
     "jest": "^30.0.0",
     "ts-jest": "^29.2.0",
     "typescript": "^5.7.0",
