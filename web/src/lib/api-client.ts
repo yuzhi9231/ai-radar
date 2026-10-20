@@ -22,8 +22,12 @@ export async function getAllArticles(
 	filters?: ArticleFilters,
 ): Promise<{ articles: any[]; total: number; limit: number; offset: number }> {
 	if (!filters) {
-		const articles = await json<any[]>("/articles");
-		return { articles, total: articles.length, limit: articles.length, offset: 0 };
+		return json<{
+			articles: any[];
+			total: number;
+			limit: number;
+			offset: number;
+		}>("/articles");
 	}
 	const params = new URLSearchParams();
 	if (filters.source) params.set("source", filters.source);
@@ -31,11 +35,13 @@ export async function getAllArticles(
 	if (filters.sort) params.set("sort", filters.sort);
 	if (filters.limit) params.set("limit", String(filters.limit));
 	if (filters.offset) params.set("offset", String(filters.offset));
-	return json<{ articles: any[]; total: number; limit: number; offset: number }>(
-		`/articles?${params.toString()}`,
-	);
+	return json<{
+		articles: any[];
+		total: number;
+		limit: number;
+		offset: number;
+	}>(`/articles?${params.toString()}`);
 }
-
 
 export async function getArticleById(id: string): Promise<any> {
 	return json<any>(`/articles/${id}`);

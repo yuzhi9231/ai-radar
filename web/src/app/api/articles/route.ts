@@ -59,7 +59,9 @@ export async function GET(req: NextRequest) {
 		if (whereClauses.length > 0) {
 			totalQuery += " WHERE " + whereClauses.join(" AND ");
 		}
-		const total = db.prepare(totalQuery).get(...filterParams) as { count: number };
+		const total = db.prepare(totalQuery).get(...filterParams) as {
+			count: number;
+		};
 
 		const articles = db.prepare(query).all(...params) as any[];
 

@@ -47,8 +47,6 @@
 				}
 			]
 		},
-		"extensionsToTreatAsEsm": [
-			".ts"
-		]
+		"extensionsToTreatAsEsm": [".ts"]
 	}
 }

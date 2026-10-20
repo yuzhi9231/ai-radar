@@ -27,18 +27,23 @@ describe("API Client", () => {
 		it("should fetch from /api/articles", async () => {
 			mockFetch.mockResolvedValueOnce({
 				ok: true,
-				json: async () => [
-					{ id: "abc123", raw_title: "Test Article", source: "techcrunch" },
-				],
+				json: async () => ({
+					articles: [
+						{ id: "abc123", raw_title: "Test Article", source: "techcrunch" },
+					],
+					total: 1,
+					limit: 1,
+					offset: 0,
+				}),
 			});
 
-			const articles = await getAllArticles();
+			const result = await getAllArticles();
 			expect(mockFetch).toHaveBeenCalledWith(
 				"/api/articles",
 				expect.objectContaining({ cache: "no-store" }),
 			);
-			expect(articles).toHaveLength(1);
-			expect(articles[0].raw_title).toBe("Test Article");
+			expect(result.articles).toHaveLength(1);
+			expect(result.articles[0].raw_title).toBe("Test Article");
 		});
 
 		it("should throw on error response", async () => {
@@ -49,6 +54,24 @@ describe("API Client", () => {
 			});
 
 			await expect(getAllArticles()).rejects.toThrow("API 500");
+		});
+
+		it("should pass filter params to API", async () => {
+			mockFetch.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({
+					articles: [],
+					total: 0,
+					limit: 10,
+					offset: 0,
+				}),
+			});
+
+			await getAllArticles({ source: "techcrunch", sort: "newest", limit: 5 });
+			expect(mockFetch).toHaveBeenCalledWith(
+				"/api/articles?source=techcrunch&sort=newest&limit=5",
+				expect.any(Object),
+			);
 		});
 	});
 
