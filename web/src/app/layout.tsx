@@ -18,7 +18,11 @@ export default function RootLayout({
 			<body className="min-h-screen bg-background text-foreground antialiased">
 				<div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
 					<header className="mb-8 flex items-center justify-between border-b border-border pb-4">
-						<a href="/" aria-label="AI Radar 首页" className="flex items-center gap-2">
+						<a
+							href="/"
+							aria-label="AI Radar 首页"
+							className="flex items-center gap-2"
+						>
 							<span className="text-2xl font-bold tracking-tight">
 								AI <span className="text-primary">Radar</span>
 							</span>
