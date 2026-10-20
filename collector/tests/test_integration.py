@@ -40,6 +40,7 @@ from collector.run import run_pipeline
 
 # --- Fixtures ---
 
+
 @pytest.fixture(autouse=True)
 def temp_db(tmp_path: Path):
     """Provide a temporary SQLite database for each test."""
@@ -47,6 +48,7 @@ def temp_db(tmp_path: Path):
     os.environ["DATABASE_URL"] = f"file:{db_path}"
     # Reset global connection
     import collector.db as db_mod
+
     db_mod._db_conn = None
     init_db(f"file:{db_path}")
     yield db_path
@@ -55,6 +57,7 @@ def temp_db(tmp_path: Path):
 
 
 # --- Collection Tests ---
+
 
 class TestCollector:
     """Test data collection from all sources."""
@@ -116,14 +119,25 @@ class TestCollector:
 
 # --- Dedup Tests ---
 
+
 class TestDedup:
     """Test deduplication logic."""
 
     def test_url_exact_dedup(self):
         """Articles with the same URL should be deduplicated."""
         url = "https://techcrunch.com/2024/01/01/test-article"
-        article1 = Article(source_url=url, source_name="TechCrunch", source=ArticleSource.TECHCRUNCH, raw_title="Test 1")
-        article2 = Article(source_url=url, source_name="TechCrunch", source=ArticleSource.TECHCRUNCH, raw_title="Test 1 - Duplicate")
+        article1 = Article(
+            source_url=url,
+            source_name="TechCrunch",
+            source=ArticleSource.TECHCRUNCH,
+            raw_title="Test 1",
+        )
+        article2 = Article(
+            source_url=url,
+            source_name="TechCrunch",
+            source=ArticleSource.TECHCRUNCH,
+            raw_title="Test 1 - Duplicate",
+        )
         existing = [article1]
         new, dup_count = deduplicate([article2], existing)
         assert len(new) == 0
@@ -132,8 +146,18 @@ class TestDedup:
     def test_title_similarity_dedup(self):
         """Articles with highly similar titles should be deduplicated."""
         base_title = "OpenAI Releases GPT-5 with Revolutionary Multimodal Capabilities"
-        article1 = Article(source_url="https://example.com/1", source_name="TC", source=ArticleSource.TECHCRUNCH, raw_title=base_title)
-        article2 = Article(source_url="https://example.com/2", source_name="TV", source=ArticleSource.THE_VERGE, raw_title=base_title + " and More")
+        article1 = Article(
+            source_url="https://example.com/1",
+            source_name="TC",
+            source=ArticleSource.TECHCRUNCH,
+            raw_title=base_title,
+        )
+        article2 = Article(
+            source_url="https://example.com/2",
+            source_name="TV",
+            source=ArticleSource.THE_VERGE,
+            raw_title=base_title + " and More",
+        )
         existing = [article1]
         new, dup_count = deduplicate([article2], existing)
         assert len(new) == 0
@@ -141,8 +165,18 @@ class TestDedup:
 
     def test_different_articles_not_deduped(self):
         """Articles with different URLs and titles should NOT be deduplicated."""
-        article1 = Article(source_url="https://example.com/1", source_name="TC", source=ArticleSource.TECHCRUNCH, raw_title="OpenAI Launches GPT-5")
-        article2 = Article(source_url="https://example.com/2", source_name="TV", source=ArticleSource.THE_VERGE, raw_title="Google Announces Gemini Pro Update")
+        article1 = Article(
+            source_url="https://example.com/1",
+            source_name="TC",
+            source=ArticleSource.TECHCRUNCH,
+            raw_title="OpenAI Launches GPT-5",
+        )
+        article2 = Article(
+            source_url="https://example.com/2",
+            source_name="TV",
+            source=ArticleSource.THE_VERGE,
+            raw_title="Google Announces Gemini Pro Update",
+        )
         existing = [article1]
         new, dup_count = deduplicate([article2], existing)
         assert len(new) == 1
@@ -151,11 +185,26 @@ class TestDedup:
     def test_dedup_with_existing_articles(self):
         """Dedup should filter new articles against existing ones."""
         existing = [
-            Article(source_url="https://example.com/existing", source_name="TC", source=ArticleSource.TECHCRUNCH, raw_title="Existing Article"),
+            Article(
+                source_url="https://example.com/existing",
+                source_name="TC",
+                source=ArticleSource.TECHCRUNCH,
+                raw_title="Existing Article",
+            ),
         ]
         new_articles = [
-            Article(source_url="https://example.com/existing", source_name="TC", source=ArticleSource.TECHCRUNCH, raw_title="Existing Article"),
-            Article(source_url="https://example.com/new", source_name="TV", source=ArticleSource.THE_VERGE, raw_title="Brand New Article"),
+            Article(
+                source_url="https://example.com/existing",
+                source_name="TC",
+                source=ArticleSource.TECHCRUNCH,
+                raw_title="Existing Article",
+            ),
+            Article(
+                source_url="https://example.com/new",
+                source_name="TV",
+                source=ArticleSource.THE_VERGE,
+                raw_title="Brand New Article",
+            ),
         ]
         filtered, dup_count = deduplicate(new_articles, existing)
         assert len(filtered) == 1
@@ -164,6 +213,7 @@ class TestDedup:
 
 
 # --- Database Tests ---
+
 
 class TestDatabase:
     """Test SQLite operations."""
@@ -255,6 +305,7 @@ class TestDatabase:
 
 # --- AI Processing Tests ---
 
+
 class TestAIProcessing:
     """Test AI processing with mock mode."""
 
@@ -277,7 +328,13 @@ class TestAIProcessing:
         assert processed.generation_status == "success"
         assert processed.headline_zh
         assert processed.summary_zh
-        assert processed.category in ("general", "product", "research", "business", "engineering")
+        assert processed.category in (
+            "general",
+            "product",
+            "research",
+            "business",
+            "engineering",
+        )
 
     def test_mock_ai_headline_in_chinese(self):
         """Mock AI should produce Chinese headlines."""
@@ -318,6 +375,7 @@ class TestAIProcessing:
 
 
 # --- Pipeline Integration Test ---
+
 
 class TestPipeline:
     """Test the full collection pipeline."""
@@ -379,6 +437,7 @@ class TestPipeline:
 
 # --- Daily Brief Tests ---
 
+
 class TestDailyBrief:
     """Test daily brief database operations."""
 
@@ -410,6 +469,7 @@ class TestDailyBrief:
 
 # --- Pipeline Run Tests ---
 
+
 class TestPipelineRun:
     """Test pipeline run tracking."""
 
@@ -434,12 +494,14 @@ class TestPipelineRun:
 
 # --- CLI Tests ---
 
+
 class TestCLI:
     """Test CLI entry point."""
 
     def test_cli_show_help(self, capsys):
         """CLI should show help when no arguments provided."""
         import collector.cli as cli
+
         sys.argv = ["collector"]
         try:
             cli.main()
@@ -452,13 +514,19 @@ class TestCLI:
         """CLI run command should work with mock AI."""
         import collector.cli as cli
         import collector.db as db_mod
+
         os.environ["DATABASE_URL"] = f"file:{tmp_path}/test-cli.db"
         db_mod._db_conn = None
 
         with patch("collector.run.collect_all") as mock_collect:
             mock_collect.return_value = {
                 "techcrunch": [
-                    Article(source_url="https://example.com/cli-test", source_name="TC", source=ArticleSource.TECHCRUNCH, raw_title="CLI Test"),
+                    Article(
+                        source_url="https://example.com/cli-test",
+                        source_name="TC",
+                        source=ArticleSource.TECHCRUNCH,
+                        raw_title="CLI Test",
+                    ),
                 ],
                 "theverge": [],
                 "hn": [],
@@ -471,6 +539,7 @@ class TestCLI:
 
 
 # --- Collector Mock Mode Test ---
+
 
 class TestMockMode:
     """Test mock AI mode behavior."""
