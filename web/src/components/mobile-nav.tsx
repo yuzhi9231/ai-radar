@@ -30,6 +30,11 @@ export function MobileNav() {
 				<div
 					className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
 					onClick={() => setOpen(false)}
+					onKeyDown={(e) => {
+						if (e.key === "Escape" || e.key === "Enter") setOpen(false);
+					}}
+					role="button"
+					tabIndex={0}
 					aria-hidden="true"
 				>
 					<nav
