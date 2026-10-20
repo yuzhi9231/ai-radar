@@ -1,11 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { ArticleCard } from "@/components/article-card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllArticles, getTodayBrief } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
 
@@ -79,9 +74,7 @@ export default async function HomePage() {
 										<CardTitle className="text-base">{d.headline}</CardTitle>
 									</CardHeader>
 									<CardContent>
-										<p className="text-sm text-muted-foreground">
-											{d.summary}
-										</p>
+										<p className="text-sm text-muted-foreground">{d.summary}</p>
 									</CardContent>
 								</Card>
 							))}
@@ -127,17 +120,13 @@ export default async function HomePage() {
 			{allArticles.length > 0 && (
 				<div className="flex flex-wrap items-center gap-4 rounded-lg bg-muted p-4 text-sm">
 					<span>
-						共 <strong className="text-foreground">{allArticles.length}</strong> 篇
-						文章
+						共 <strong className="text-foreground">{allArticles.length}</strong>{" "}
+						篇 文章
 					</span>
 					<span className="text-muted-foreground">|</span>
 					<span className="flex flex-wrap items-center gap-1">
 						来源:{" "}
-						{Array.from(
-							new Set(
-								allArticles.map((a: any) => a.source_name),
-							),
-						)
+						{Array.from(new Set(allArticles.map((a: any) => a.source_name)))
 							.slice(0, 10)
 							.map((s: string) => (
 								<Badge key={s} variant="secondary" className="text-[10px]">

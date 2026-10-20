@@ -1,10 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils";
 
 export function ArticleCard({ article }: { article: any }) {
@@ -50,12 +45,11 @@ export function ArticleCard({ article }: { article: any }) {
 							</Badge>
 						)}
 					</div>
-					{article.importance_score != null &&
-						article.importance_score > 0 && (
-							<span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-								{article.importance_score}
-							</span>
-						)}
+					{article.importance_score != null && article.importance_score > 0 && (
+						<span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+							{article.importance_score}
+						</span>
+					)}
 				</div>
 			</CardContent>
 		</Card>

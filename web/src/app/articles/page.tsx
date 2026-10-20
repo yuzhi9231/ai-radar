@@ -1,5 +1,5 @@
-import { getAllArticles } from "@/lib/api-client";
 import { ArticleCard } from "@/components/article-card";
+import { getAllArticles } from "@/lib/api-client";
 
 export default async function ArticlesPage() {
 	const articles = await getAllArticles();
