@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
 	{ href: "/", label: "首页" },
@@ -11,6 +11,15 @@ const navItems = [
 
 export function MobileNav() {
 	const [open, setOpen] = useState(false);
+
+	useEffect(() => {
+		if (!open) return;
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setOpen(false);
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [open]);
 
 	return (
 		<>
@@ -30,11 +39,7 @@ export function MobileNav() {
 				<div
 					className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
 					onClick={() => setOpen(false)}
-					onKeyDown={(e) => {
-						if (e.key === "Escape" || e.key === "Enter") setOpen(false);
-					}}
-					tabIndex={0}
-					aria-label="点击或按 ESC 关闭菜单"
+					aria-hidden="true"
 				>
 					<nav
 						className="mt-24 flex flex-col items-center gap-6 text-lg"
