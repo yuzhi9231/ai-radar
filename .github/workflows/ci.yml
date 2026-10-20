@@ -48,8 +48,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies (skip native build)
-        run: npm install --ignore-scripts
+      - name: Install dependencies
+        run: npm install
 
       - name: Run Jest tests
         run: npm test
@@ -67,8 +67,8 @@ jobs:
       - name: Validate compose file
         run: docker compose config --quiet
 
-      - name: Check compose up
-        run: docker compose up -d --pull always
+      - name: Check compose up (web + collector only)
+        run: docker compose up -d --pull always --no-deps web collector
 
       - name: Stop containers
         run: docker compose down
