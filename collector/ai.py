@@ -64,11 +64,11 @@ def _build_user_content(article: Article) -> str:
 def _call_ollama(article: Article) -> Optional[dict]:
     """Call Ollama API to process a single article."""
     url = f"{OLLAMA_BASE_URL}/api/generate"
-    _build_user_content(article)
+    user_content = _build_user_content(article)
 
     payload = {
         "model": OLLAMA_MODEL,
-        "prompt": SYSTEM_PROMPT,
+        "prompt": SYSTEM_PROMPT + "\n\n请分析以下新闻：\n" + user_content,
         "system": "你只输出 JSON，不要输出任何其他内容。",
         "stream": False,
         "options": {
