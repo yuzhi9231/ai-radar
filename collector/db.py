@@ -481,9 +481,7 @@ def get_sources() -> list[dict]:
 def get_source_by_id(source_id: str) -> Optional[Source]:
     """Get a single source by ID."""
     conn = get_connection()
-    row = conn.execute(
-        "SELECT * FROM sources WHERE id = ?", (source_id,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM sources WHERE id = ?", (source_id,)).fetchone()
     if not row:
         return None
     last_success = (

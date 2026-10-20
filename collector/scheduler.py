@@ -20,7 +20,9 @@ def scheduled_job() -> None:
     if use_mock.lower() == "true":
         os.environ["USE_MOCK_AI"] = "true"
 
-    print(f"[{datetime.now(timezone.utc).isoformat()}] Scheduled collection starting...")
+    print(
+        f"[{datetime.now(timezone.utc).isoformat()}] Scheduled collection starting..."
+    )
     try:
         run = run_pipeline()
         print(f"  Fetched: {run.articles_fetched}")

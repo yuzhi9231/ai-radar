@@ -19,7 +19,9 @@ def main():
     args = parser.parse_args()
 
     if args.command == "run":
-        print(f"[{datetime.now(timezone.utc).isoformat()}] Running manual collection...")
+        print(
+            f"[{datetime.now(timezone.utc).isoformat()}] Running manual collection..."
+        )
         run = run_pipeline()
         print(f"  Fetched: {run.articles_fetched}")
         print(f"  New: {run.articles_new}")
@@ -34,9 +36,7 @@ def main():
         schedule_str = "10,15"
         hours = [int(h) for h in schedule_str.split(",")]
 
-        scheduler = BlockingScheduler(
-            timezone=timezone.utc + timedelta(hours=8)
-        )
+        scheduler = BlockingScheduler(timezone=timezone.utc + timedelta(hours=8))
         for hour in hours:
             scheduler.add_job(
                 run_pipeline,
