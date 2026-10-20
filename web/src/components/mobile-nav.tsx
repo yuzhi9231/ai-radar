@@ -36,6 +36,7 @@ export function MobileNav() {
 
 			{/* Full-screen overlay */}
 			{open && (
+				// biome-ignore a11y/useKeyWithClickEvents: backdrop click-to-dismiss is standard UX, Escape handled globally
 				<div
 					className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
 					onClick={() => setOpen(false)}
