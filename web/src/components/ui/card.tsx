@@ -17,7 +17,9 @@ export function CardDescription({
 	className,
 	...props
 }: React.ComponentProps<"p">) {
-	return <p className={cn("text-sm text-muted-foreground", className)} {...props} />;
+	return (
+		<p className={cn("text-sm text-muted-foreground", className)} {...props} />
+	);
 }
 
 export function CardHeader({
