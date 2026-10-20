@@ -4,9 +4,10 @@
 
 ## 项目现状
 
-- 阶段：Phase 1 前（仅设计文档）
-- 代码：未开始
+- 阶段：Phase 1 集成测试阶段
+- 代码：已完成 collector（Python）、web（Next.js）、Docker Compose、集成测试
 - Git：已初始化，无远程，无提交
+- 分支：`feature/integration-testing`（当前）
 
 ## 关键约束
 

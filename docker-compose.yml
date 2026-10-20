@@ -1,0 +1,53 @@
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: ai-radar-web
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_PATH=/data/ai-radar.db
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - ai-radar-data:/data
+    depends_on:
+      ollama:
+        condition: service_started
+      collector:
+        condition: service_started
+    restart: unless-stopped
+
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    container_name: ai-radar-collector
+    environment:
+      - DATABASE_URL=file:/data/ai-radar.db
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - SCHEDULE=10:00,15:00
+    volumes:
+      - ai-radar-data:/data
+    depends_on:
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+    command: ["python", "-m", "collector.scheduler"]
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-radar-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ai-radar-data:
+    driver: local
+    name: ai-radar-data
+  ollama-data:
+    driver: local
+    name: ollama-data

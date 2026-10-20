@@ -1,0 +1,42 @@
+{
+  "name": "ai-radar-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest tests/"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "clsx": "^2.1.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.7.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.5.0",
+    "autoprefixer": "^10.4.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": ["ts-jest", { "useESM": true }]
+    },
+    "extensionsToTreatAsEsm": [".ts"]
+  }
+}
