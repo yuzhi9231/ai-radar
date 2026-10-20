@@ -50,7 +50,6 @@ jobs:
 
       - name: Install dependencies (skip native build)
         run: npm install --ignore-scripts
-        working-directory: web
 
       - name: Run Jest tests
         run: npm test
