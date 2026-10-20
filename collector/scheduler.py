@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Ensure collector package is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,7 +20,7 @@ def scheduled_job() -> None:
     if use_mock.lower() == "true":
         os.environ["USE_MOCK_AI"] = "true"
 
-    print(f"[{datetime.utcnow().isoformat()}] Scheduled collection starting...")
+    print(f"[{datetime.now(timezone.utc).isoformat()}] Scheduled collection starting...")
     try:
         run = run_pipeline()
         print(f"  Fetched: {run.articles_fetched}")

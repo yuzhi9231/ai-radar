@@ -26,6 +26,20 @@ class Collection(str, Enum):
     PIPELINE_RUNS = "pipeline_runs"
 
 
+class Source(BaseModel):
+    """External data source configuration."""
+
+    id: str = Field(description="Unique source identifier (e.g., 'techcrunch')")
+    name: str = Field(description="Display name of the source")
+    feed_url: str = Field(description="RSS feed URL or API endpoint")
+    feed_type: str = Field(description="Source type: 'rss' or 'api'")
+    enabled: bool = Field(default=True)
+    last_success: Optional[datetime] = Field(default=None)
+    last_error: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class Article(BaseModel):
     """Raw news article from a data source."""
 

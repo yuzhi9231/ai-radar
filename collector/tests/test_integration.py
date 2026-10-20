@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -70,6 +70,22 @@ class TestCollector:
         assert "theverge" in source_values
         assert "hn" in source_values
 
+    def test_hn_api_url_uses_ai_tag(self):
+        """Hacker News API URL should use tags=ai filter per Issue #7."""
+        from unittest.mock import patch
+
+        import httpx
+
+        from collector.collectors import collect_hackernews
+
+        with patch.object(httpx.Client, "get") as mock_get:
+            mock_get.return_value.json.return_value = {"hits": []}
+            collect_hackernews()
+            call_args = mock_get.call_args
+            assert call_args is not None
+            url = call_args[0][0]
+            assert "tags=ai" in url, f"HN API should use tags=ai, got: {url}"
+
     @pytest.mark.skipif(
         os.environ.get("SKIP_NETWORK_TESTS") == "true",
         reason="Network tests disabled (SKIP_NETWORK_TESTS=true)",
@@ -115,9 +131,6 @@ class TestCollector:
             assert article.source == ArticleSource.HN
             assert article.source_url
             assert article.raw_title
-
-
-# --- Dedup Tests ---
 
 
 class TestDedup:
@@ -478,7 +491,7 @@ class TestPipelineRun:
         from collector.db import create_pipeline_run, get_latest_pipeline_run
 
         run = PipelineRun(
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             status="success",
             articles_fetched=10,
             articles_new=5,
@@ -490,6 +503,70 @@ class TestPipelineRun:
         assert latest is not None
         assert latest.status == "success"
         assert latest.articles_fetched == 10
+
+
+# --- Source Model Tests ---
+
+
+class TestSource:
+    """Test Source model and database operations."""
+
+    def test_source_model_defaults(self):
+        """Source model should have correct defaults."""
+        from collector.models import Source
+
+        source = Source(
+            id="test_source",
+            name="Test Source",
+            feed_url="https://example.com/feed",
+            feed_type="rss",
+        )
+        assert source.id == "test_source"
+        assert source.name == "Test Source"
+        assert source.feed_url == "https://example.com/feed"
+        assert source.feed_type == "rss"
+        assert source.enabled is True
+        assert source.last_success is None
+        assert source.last_error is None
+
+    def test_source_model_disabled(self):
+        """Source model should support disabled state."""
+        from collector.models import Source
+
+        source = Source(
+            id="disabled_source",
+            name="Disabled",
+            feed_url="https://example.com/feed",
+            feed_type="api",
+            enabled=False,
+        )
+        assert source.enabled is False
+
+    def test_upsert_source(self, temp_db: Path):
+        """Test inserting and retrieving a source."""
+        from collector.db import get_source_by_id, upsert_source
+        from collector.models import Source
+
+        source = Source(
+            id="custom_source",
+            name="Custom AI Source",
+            feed_url="https://example.com/ai/feed",
+            feed_type="rss",
+        )
+        upsert_source(source)
+
+        fetched = get_source_by_id("custom_source")
+        assert fetched is not None
+        assert fetched.name == "Custom AI Source"
+        assert fetched.feed_type == "rss"
+        assert fetched.enabled is True
+
+    def test_get_nonexistent_source(self, temp_db: Path):
+        """Test retrieving a non-existent source."""
+        from collector.db import get_source_by_id
+
+        fetched = get_source_by_id("nonexistent")
+        assert fetched is None
 
 
 # --- CLI Tests ---

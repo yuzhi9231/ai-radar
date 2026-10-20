@@ -66,7 +66,7 @@ def collect_theverge() -> list[Article]:
 
 def collect_hackernews() -> list[Article]:
     """Collect articles from Hacker News via Algolia API."""
-    url = "https://hn.algolia.com/api/v1/search?tags=story"
+    url = "https://hn.algolia.com/api/v1/search?tags=ai"
 
     try:
         with httpx.Client(timeout=REQUEST_TIMEOUT) as client:

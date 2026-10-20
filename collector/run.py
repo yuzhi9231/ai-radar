@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .ai import process_article
 from .collectors import collect_all
@@ -20,7 +20,7 @@ from .models import PipelineRun
 def run_pipeline() -> PipelineRun:
     """Execute a full collection pipeline: fetch → dedup → store → AI process."""
     run = PipelineRun(status="running")
-    run.started_at = datetime.utcnow()
+    run.started_at = datetime.now(timezone.utc)
 
     # Create pipeline run record
     create_pipeline_run(run)
@@ -38,7 +38,7 @@ def run_pipeline() -> PipelineRun:
             source_stats[source_name] = {
                 "fetched": len(articles),
                 "status": "success" if len(articles) > 0 else "no_articles",
-                "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             }
             all_articles.extend(articles)
 
@@ -71,11 +71,11 @@ def run_pipeline() -> PipelineRun:
                 pass
 
         run.status = "success" if inserted > 0 else "partial_failure"
-        run.completed_at = datetime.utcnow()
+        run.completed_at = datetime.now(timezone.utc)
 
     except Exception as e:
         run.status = "failed"
-        run.completed_at = datetime.utcnow()
+        run.completed_at = datetime.now(timezone.utc)
         run.source_results["error"] = {"status": "error", "message": str(e)}
 
     # Update pipeline run record
@@ -89,7 +89,7 @@ def run_manual() -> None:
 
     os.environ.setdefault("USE_MOCK_AI", "true")  # Default to mock for manual runs
 
-    print(f"[{datetime.utcnow().isoformat()}] Starting manual collection...")
+    print(f"[{datetime.now(timezone.utc).isoformat()}] Starting manual collection...")
     run = run_pipeline()
     print(f"  Fetched: {run.articles_fetched}")
     print(f"  New: {run.articles_new}")

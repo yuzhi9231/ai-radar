@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from .models import Article, ArticleSource, DailyBrief, PipelineRun, ProcessedArticle
+from .models import (
+    Article,
+    ArticleSource,
+    DailyBrief,
+    PipelineRun,
+    ProcessedArticle,
+    Source,
+)
 
 # Global database connection cache
 _db_conn: Optional[sqlite3.Connection] = None
@@ -445,7 +452,7 @@ def get_stats() -> dict:
     processed = conn.execute(
         "SELECT COUNT(*) FROM processed_articles WHERE generation_status = 'success'"
     ).fetchone()[0]
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     today_count = conn.execute(
         "SELECT COUNT(*) FROM articles WHERE date(fetched_at) = ?", (today,)
     ).fetchone()[0]
@@ -466,3 +473,55 @@ def get_sources() -> list[dict]:
     conn = get_connection()
     rows = conn.execute("SELECT * FROM sources ORDER BY name").fetchall()
     return [dict(row) for row in rows]
+
+
+# --- Source operations ---
+
+
+def get_source_by_id(source_id: str) -> Optional[Source]:
+    """Get a single source by ID."""
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM sources WHERE id = ?", (source_id,)
+    ).fetchone()
+    if not row:
+        return None
+    last_success = (
+        datetime.fromisoformat(row["last_success"]) if row["last_success"] else None
+    )
+    return Source(
+        id=row["id"],
+        name=row["name"],
+        feed_url=row["feed_url"],
+        feed_type=row["feed_type"],
+        enabled=bool(row["enabled"]),
+        last_success=last_success,
+        last_error=row["last_error"],
+        created_at=datetime.fromisoformat(row["created_at"]),
+        updated_at=datetime.fromisoformat(row["updated_at"]),
+    )
+
+
+def upsert_source(source: Source) -> None:
+    """Insert or update a source record."""
+    conn = get_connection()
+    conn.execute(
+        """
+        INSERT OR REPLACE INTO sources
+            (id, name, feed_url, feed_type, enabled, last_success, last_error,
+             updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    """,
+        (
+            source.id,
+            source.name,
+            source.feed_url,
+            source.feed_type,
+            int(source.enabled),
+            source.last_success.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if source.last_success
+            else None,
+            source.last_error,
+        ),
+    )
+    conn.commit()

@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from .run import run_pipeline
 
@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "run":
-        print(f"[{datetime.utcnow().isoformat()}] Running manual collection...")
+        print(f"[{datetime.now(timezone.utc).isoformat()}] Running manual collection...")
         run = run_pipeline()
         print(f"  Fetched: {run.articles_fetched}")
         print(f"  New: {run.articles_new}")
@@ -27,8 +27,6 @@ def main():
         sys.exit(0 if run.status == "success" else 1)
 
     elif args.command == "schedule":
-        from datetime import timezone
-
         from apscheduler.schedulers.blocking import BlockingScheduler
         from apscheduler.triggers.cron import CronTrigger
 
@@ -37,7 +35,7 @@ def main():
         hours = [int(h) for h in schedule_str.split(",")]
 
         scheduler = BlockingScheduler(
-            timezone=timezone.utc + __import__("datetime").timedelta(hours=8)
+            timezone=timezone.utc + timedelta(hours=8)
         )
         for hour in hours:
             scheduler.add_job(
@@ -45,7 +43,7 @@ def main():
                 CronTrigger(
                     hour=hour,
                     minute=0,
-                    timezone=timezone.utc + __import__("datetime").timedelta(hours=8),
+                    timezone=timezone.utc + timedelta(hours=8),
                 ),
                 id=f"collection_{hour}",
                 max_instances=1,
