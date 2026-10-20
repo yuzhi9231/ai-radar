@@ -45,6 +45,7 @@ def init_db(db_url: str = "file:/data/ai-radar.db") -> sqlite3.Connection:
 def get_connection() -> sqlite3.Connection:
     """Get or create the global database connection."""
     import os
+
     db_url = os.environ.get("DATABASE_URL", "file:/data/ai-radar.db")
     return init_db(db_url)
 
@@ -147,36 +148,64 @@ def _create_tables(conn: sqlite3.Connection) -> None:
 def _init_sources(conn: sqlite3.Connection) -> None:
     """Initialize default data sources if not present."""
     sources = [
-        ("techcrunch", "TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/", "rss"),
-        ("theverge", "The Verge AI", "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml", "rss"),
-        ("hn", "Hacker News", "https://hn.algolia.com/api/v1/search?tags=story&dateRange=past24hours", "api"),
+        (
+            "techcrunch",
+            "TechCrunch AI",
+            "https://techcrunch.com/category/artificial-intelligence/feed/",
+            "rss",
+        ),
+        (
+            "theverge",
+            "The Verge AI",
+            "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+            "rss",
+        ),
+        (
+            "hn",
+            "Hacker News",
+            "https://hn.algolia.com/api/v1/search?tags=story&dateRange=past24hours",
+            "api",
+        ),
     ]
     for sid, name, feed_url, feed_type in sources:
-        conn.execute("""
+        conn.execute(
+            """
             INSERT OR IGNORE INTO sources (id, name, feed_url, feed_type)
             VALUES (?, ?, ?, ?)
-        """, (sid, name, feed_url, feed_type))
+        """,
+            (sid, name, feed_url, feed_type),
+        )
     conn.commit()
 
 
 # --- Article operations ---
 
+
 def upsert_article(article: Article) -> bool:
     """Insert or ignore an article. Returns True if newly inserted."""
     conn = get_connection()
     try:
-        result = conn.execute("""
+        result = conn.execute(
+            """
             INSERT OR IGNORE INTO articles
                 (id, source_url, source_name, source, raw_title, raw_description,
                  published_at, fetched_at, language)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            article.id, article.source_url, article.source_name,
-            article.source.value, article.raw_title, article.raw_description,
-            article.published_at.strftime("%Y-%m-%dT%H:%M:%SZ") if article.published_at else None,
-            article.fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            article.language,
-        ))
+        """,
+            (
+                article.id,
+                article.source_url,
+                article.source_name,
+                article.source.value,
+                article.raw_title,
+                article.raw_description,
+                article.published_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if article.published_at
+                else None,
+                article.fetched_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                article.language,
+            ),
+        )
         conn.commit()
         return result.rowcount > 0
     except sqlite3.IntegrityError:
@@ -201,7 +230,8 @@ def get_all_articles() -> list[Article]:
 def get_articles_by_date(date_str: str) -> list[Article]:
     """Get articles for a specific date."""
     conn = get_connection()
-    rows = conn.execute("""
+    rows = conn.execute(
+        """
         SELECT a.id, a.source_url, a.source_name, a.source, a.raw_title,
                a.raw_description, a.published_at, a.fetched_at, a.language,
                pa.headline_zh, pa.summary_zh, pa.category,
@@ -210,14 +240,17 @@ def get_articles_by_date(date_str: str) -> list[Article]:
         LEFT JOIN processed_articles pa ON a.id = pa.article_id
         WHERE date(a.fetched_at) = ?
         ORDER BY a.fetched_at DESC
-    """, (date_str,)).fetchall()
+    """,
+        (date_str,),
+    ).fetchall()
     return [_row_to_article(row) for row in rows]
 
 
 def get_article_by_id(article_id: str) -> Optional[Article]:
     """Get a single article by ID."""
     conn = get_connection()
-    row = conn.execute("""
+    row = conn.execute(
+        """
         SELECT a.id, a.source_url, a.source_name, a.source, a.raw_title,
                a.raw_description, a.published_at, a.fetched_at, a.language,
                pa.headline_zh, pa.summary_zh, pa.category,
@@ -225,14 +258,17 @@ def get_article_by_id(article_id: str) -> Optional[Article]:
         FROM articles a
         LEFT JOIN processed_articles pa ON a.id = pa.article_id
         WHERE a.id = ?
-    """, (article_id,)).fetchone()
+    """,
+        (article_id,),
+    ).fetchone()
     return _row_to_article(row) if row else None
 
 
 def _row_to_article(row: sqlite3.Row) -> Article:
     """Convert a DB row to an Article model."""
-    import json as _json
-    published_at = datetime.fromisoformat(row["published_at"]) if row["published_at"] else None
+    published_at = (
+        datetime.fromisoformat(row["published_at"]) if row["published_at"] else None
+    )
     fetched_at = datetime.fromisoformat(row["fetched_at"])
     source = ArticleSource(row["source"])
 
@@ -263,30 +299,41 @@ def _row_to_article(row: sqlite3.Row) -> Article:
 
 # --- Processed article operations ---
 
+
 def upsert_processed_article(processed: ProcessedArticle) -> None:
     """Insert or update a processed article."""
     conn = get_connection()
     tags_json = json.dumps(processed.tags, ensure_ascii=False)
     entities_json = json.dumps(processed.related_entities, ensure_ascii=False)
 
-    conn.execute("""
+    conn.execute(
+        """
         INSERT OR REPLACE INTO processed_articles
             (id, article_id, headline_zh, summary_zh, why_it_matters_zh,
              category, tags, importance_score, source_confidence,
              related_entities, generated_at, generation_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        processed.id, processed.article_id,
-        processed.headline_zh, processed.summary_zh, processed.why_it_matters_zh,
-        processed.category, tags_json, processed.importance_score,
-        processed.source_confidence, entities_json,
-        processed.generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        processed.generation_status,
-    ))
+    """,
+        (
+            processed.id,
+            processed.article_id,
+            processed.headline_zh,
+            processed.summary_zh,
+            processed.why_it_matters_zh,
+            processed.category,
+            tags_json,
+            processed.importance_score,
+            processed.source_confidence,
+            entities_json,
+            processed.generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            processed.generation_status,
+        ),
+    )
     conn.commit()
 
 
 # --- Daily brief operations ---
+
 
 def upsert_daily_brief(brief: DailyBrief) -> None:
     """Insert or update a daily brief."""
@@ -294,23 +341,31 @@ def upsert_daily_brief(brief: DailyBrief) -> None:
     highlights_json = json.dumps(brief.highlights, ensure_ascii=False)
     dev_focus_json = json.dumps(brief.dev_focus, ensure_ascii=False)
 
-    conn.execute("""
+    conn.execute(
+        """
         INSERT OR REPLACE INTO daily_briefs
             (id, date, trend_summary, highlights, dev_focus, generated_at, generation_status)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        brief.id, brief.date, brief.trend_summary,
-        highlights_json, dev_focus_json,
-        brief.generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        brief.generation_status,
-    ))
+    """,
+        (
+            brief.id,
+            brief.date,
+            brief.trend_summary,
+            highlights_json,
+            dev_focus_json,
+            brief.generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            brief.generation_status,
+        ),
+    )
     conn.commit()
 
 
 def get_daily_brief(date_str: str) -> Optional[DailyBrief]:
     """Get a daily brief for a specific date."""
     conn = get_connection()
-    row = conn.execute("SELECT * FROM daily_briefs WHERE date = ?", (date_str,)).fetchone()
+    row = conn.execute(
+        "SELECT * FROM daily_briefs WHERE date = ?", (date_str,)
+    ).fetchone()
     if not row:
         return None
     return DailyBrief(
@@ -325,26 +380,32 @@ def get_daily_brief(date_str: str) -> Optional[DailyBrief]:
 
 # --- Pipeline run operations ---
 
+
 def create_pipeline_run(run: PipelineRun) -> str:
     """Create a new pipeline run record."""
     conn = get_connection()
     source_results_json = json.dumps(run.source_results, ensure_ascii=False)
 
-    conn.execute("""
+    conn.execute(
+        """
         INSERT OR REPLACE INTO pipeline_runs
             (id, started_at, completed_at, status, articles_fetched,
              articles_new, articles_updated, source_results)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        run.id,
-        run.started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        run.completed_at.strftime("%Y-%m-%dT%H:%M:%SZ") if run.completed_at else None,
-        run.status,
-        run.articles_fetched,
-        run.articles_new,
-        run.articles_updated,
-        source_results_json,
-    ))
+    """,
+        (
+            run.id,
+            run.started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            run.completed_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if run.completed_at
+            else None,
+            run.status,
+            run.articles_fetched,
+            run.articles_new,
+            run.articles_updated,
+            source_results_json,
+        ),
+    )
     conn.commit()
     return run.id
 
@@ -352,13 +413,17 @@ def create_pipeline_run(run: PipelineRun) -> str:
 def get_latest_pipeline_run() -> Optional[PipelineRun]:
     """Get the most recent pipeline run."""
     conn = get_connection()
-    row = conn.execute("SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT 1").fetchone()
+    row = conn.execute(
+        "SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT 1"
+    ).fetchone()
     if not row:
         return None
     return PipelineRun(
         id=row["id"],
         started_at=datetime.fromisoformat(row["started_at"]),
-        completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
+        completed_at=datetime.fromisoformat(row["completed_at"])
+        if row["completed_at"]
+        else None,
         status=row["status"],
         articles_fetched=row["articles_fetched"],
         articles_new=row["articles_new"],
@@ -369,12 +434,17 @@ def get_latest_pipeline_run() -> Optional[PipelineRun]:
 
 # --- Stats ---
 
+
 def get_stats() -> dict:
     """Get overall statistics."""
     conn = get_connection()
     total = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
-    sources = conn.execute("SELECT COUNT(*) FROM sources WHERE enabled = 1").fetchone()[0]
-    processed = conn.execute("SELECT COUNT(*) FROM processed_articles WHERE generation_status = 'success'").fetchone()[0]
+    sources = conn.execute("SELECT COUNT(*) FROM sources WHERE enabled = 1").fetchone()[
+        0
+    ]
+    processed = conn.execute(
+        "SELECT COUNT(*) FROM processed_articles WHERE generation_status = 'success'"
+    ).fetchone()[0]
     today = datetime.utcnow().strftime("%Y-%m-%d")
     today_count = conn.execute(
         "SELECT COUNT(*) FROM articles WHERE date(fetched_at) = ?", (today,)
@@ -389,6 +459,7 @@ def get_stats() -> dict:
 
 
 # --- Sources ---
+
 
 def get_sources() -> list[dict]:
     """Get all sources."""

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
 from typing import Optional
 
 import httpx
@@ -20,8 +19,13 @@ OLLAMA_TIMEOUT = int(os.environ.get("OLLAMA_TIMEOUT", "120"))
 USE_MOCK_AI = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
 
 CATEGORIES = [
-    "大模型/API", "AI Coding/Agent", "AI 产品/工具",
-    "开源项目", "论文/研究", "行业/公司/政策", "general",
+    "大模型/API",
+    "AI Coding/Agent",
+    "AI 产品/工具",
+    "开源项目",
+    "论文/研究",
+    "行业/公司/政策",
+    "general",
 ]
 
 
@@ -60,7 +64,7 @@ def _build_user_content(article: Article) -> str:
 def _call_ollama(article: Article) -> Optional[dict]:
     """Call Ollama API to process a single article."""
     url = f"{OLLAMA_BASE_URL}/api/generate"
-    user_content = _build_user_content(article)
+    _build_user_content(article)
 
     payload = {
         "model": OLLAMA_MODEL,
@@ -99,13 +103,15 @@ def _extract_json(text: str) -> Optional[str]:
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1 and end > start:
-        return text[start:end + 1]
+        return text[start : end + 1]
     return None
 
 
 def process_article_mock(article: Article) -> ProcessedArticle:
     """Mock AI processing - generates realistic test data without Ollama."""
-    importance = min(100, max(10, len(article.raw_title) * 2 + len(article.raw_description) // 10))
+    importance = min(
+        100, max(10, len(article.raw_title) * 2 + len(article.raw_description) // 10)
+    )
     categories = ["general", "product", "research", "business", "engineering"]
     category = categories[hash(article.id) % len(categories)]
 
@@ -113,7 +119,7 @@ def process_article_mock(article: Article) -> ProcessedArticle:
         article_id=article.id,
         headline_zh=f"[AI Radar] {article.raw_title[:40]}",
         summary_zh=f"来自 {article.source_name} 的报道：{article.raw_title}。{article.raw_description[:100]}...",
-        why_it_matters_zh=f"该事件可能对 AI 领域产生重要影响，值得持续关注。",
+        why_it_matters_zh="该事件可能对 AI 领域产生重要影响，值得持续关注。",
         category=category,
         tags=[article.source.value, "AI"],
         importance_score=importance,

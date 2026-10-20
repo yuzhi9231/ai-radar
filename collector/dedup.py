@@ -8,7 +8,6 @@ from __future__ import annotations
 import difflib
 from typing import Sequence
 
-
 # Title similarity threshold: articles above this threshold are considered duplicates
 TITLE_SIMILARITY_THRESHOLD = 0.85
 
@@ -48,7 +47,9 @@ def title_duplicate(existing_articles: Sequence, new_articles: Sequence) -> list
     return remaining
 
 
-def deduplicate(new_articles: Sequence, existing_articles: Sequence) -> tuple[list, list]:
+def deduplicate(
+    new_articles: Sequence, existing_articles: Sequence
+) -> tuple[list, list]:
     """Full deduplication: URL + title.
 
     Returns (new_articles, duplicate_count).

@@ -5,13 +5,11 @@ Tests the full data flow: collection → dedup → storage → AI processing.
 
 from __future__ import annotations
 
-import json
 import os
-import sqlite3
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Ensure collector package is importable
 sys.path.insert(0, str(Path(__file__).parent))
@@ -19,15 +17,26 @@ sys.path.insert(0, str(Path(__file__).parent))
 os.environ["USE_MOCK_AI"] = "true"
 
 import pytest
-from pydantic import BaseModel
 
-from collector.models import Article, ArticleSource, ProcessedArticle, DailyBrief, PipelineRun
-from collector.db import init_db, get_connection, upsert_article, get_all_articles, get_article_by_id, get_stats, get_sources
-from collector.dedup import deduplicate
 from collector.ai import process_article
-from collector.collectors import collect_all, COLLECTORS
+from collector.collectors import COLLECTORS
+from collector.db import (
+    get_all_articles,
+    get_article_by_id,
+    get_sources,
+    get_stats,
+    init_db,
+    upsert_article,
+)
+from collector.dedup import deduplicate
+from collector.models import (
+    Article,
+    ArticleSource,
+    DailyBrief,
+    PipelineRun,
+    ProcessedArticle,
+)
 from collector.run import run_pipeline
-
 
 # --- Fixtures ---
 
@@ -375,7 +384,7 @@ class TestDailyBrief:
 
     def test_upsert_and_get_brief(self, temp_db: Path):
         """Test creating and retrieving a daily brief."""
-        from collector.db import upsert_daily_brief, get_daily_brief
+        from collector.db import get_daily_brief, upsert_daily_brief
 
         brief = DailyBrief(
             date="2026-10-20",
