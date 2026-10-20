@@ -5,6 +5,9 @@
 		"clientKind": "git",
 		"useIgnoreFile": false
 	},
+	"files": {
+		"ignore": [".next", "node_modules"]
+	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab"
