@@ -33,9 +33,8 @@ export function MobileNav() {
 					onKeyDown={(e) => {
 						if (e.key === "Escape" || e.key === "Enter") setOpen(false);
 					}}
-					role="button"
 					tabIndex={0}
-					aria-hidden="true"
+					aria-label="点击或按 ESC 关闭菜单"
 				>
 					<nav
 						className="mt-24 flex flex-col items-center gap-6 text-lg"
