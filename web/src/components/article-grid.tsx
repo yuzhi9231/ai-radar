@@ -57,8 +57,7 @@ export function ArticleGrid({ initialArticles }: ArticleGridProps) {
 			});
 			return res;
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filters.source, filters.category, filters.sort],
+		[],
 	);
 
 	// Initial load (only once)
@@ -66,7 +65,7 @@ export function ArticleGrid({ initialArticles }: ArticleGridProps) {
 		if (hasLoadedRef.current) return;
 		hasLoadedRef.current = true;
 
-		let cancelled = false;
+		const cancelled = false;
 		setLoading(true);
 		loadArticles(filters, limit, 0)
 			.then((res) => {

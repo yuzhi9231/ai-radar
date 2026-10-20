@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
 	const db = getDb();
@@ -11,8 +11,11 @@ export async function GET(req: NextRequest) {
 	const source = searchParams.get("source");
 	const category = searchParams.get("category");
 	const sort = searchParams.get("sort") || "newest";
-	const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
-	const offset = parseInt(searchParams.get("offset") || "0");
+	const limit = Math.min(
+		Number.parseInt(searchParams.get("limit") || "20"),
+		50,
+	);
+	const offset = Number.parseInt(searchParams.get("offset") || "0");
 
 	try {
 		let query = `
@@ -36,7 +39,7 @@ export async function GET(req: NextRequest) {
 			params.push(category);
 		}
 		if (whereClauses.length > 0) {
-			query += " WHERE " + whereClauses.join(" AND ");
+			query += ` WHERE ${whereClauses.join(" AND ")}`;
 		}
 
 		switch (sort) {
@@ -55,9 +58,9 @@ export async function GET(req: NextRequest) {
 
 		// Count total (without LIMIT/OFFSET, with filter params only)
 		const filterParams = params.slice(0, -2) as any[];
-		let totalQuery = `SELECT COUNT(*) as count FROM articles a`;
+		let totalQuery = "SELECT COUNT(*) as count FROM articles a";
 		if (whereClauses.length > 0) {
-			totalQuery += " WHERE " + whereClauses.join(" AND ");
+			totalQuery += ` WHERE ${whereClauses.join(" AND ")}`;
 		}
 		const total = db.prepare(totalQuery).get(...filterParams) as {
 			count: number;

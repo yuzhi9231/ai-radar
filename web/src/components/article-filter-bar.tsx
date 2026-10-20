@@ -96,6 +96,7 @@ export function ArticleFilterBar({
 					))}
 				</select>
 				<svg
+					aria-hidden="true"
 					className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground pointer-events-none"
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -123,6 +124,7 @@ export function ArticleFilterBar({
 					))}
 				</select>
 				<svg
+					aria-hidden="true"
 					className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground pointer-events-none"
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -149,6 +151,7 @@ export function ArticleFilterBar({
 					))}
 				</select>
 				<svg
+					aria-hidden="true"
 					className="absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground pointer-events-none"
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
