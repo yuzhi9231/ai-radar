@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
-
-const dbPath = process.env.DATABASE_PATH || "/data/ai-radar.db";
-const db = new Database(dbPath, { readonly: true });
-db.pragma("journal_mode = WAL");
+import { getDb } from "@/lib/db";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json({ error: "Article not found" }, { status: 404 });
+  }
+
   try {
     const { id } = await params;
     const row = db.prepare(`

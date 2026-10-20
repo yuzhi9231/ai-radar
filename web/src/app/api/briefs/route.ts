@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
-
-const dbPath = process.env.DATABASE_PATH || "/data/ai-radar.db";
-const db = new Database(dbPath, { readonly: true });
-db.pragma("journal_mode = WAL");
+import { getDb } from "@/lib/db";
 
 export async function GET(request: Request) {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json({ brief: null });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const date = searchParams.get("date");

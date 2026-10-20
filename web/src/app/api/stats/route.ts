@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
-
-const dbPath = process.env.DATABASE_PATH || "/data/ai-radar.db";
-const db = new Database(dbPath, { readonly: true });
-db.pragma("journal_mode = WAL");
+import { getDb } from "@/lib/db";
 
 export async function GET() {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json({
+      total_articles: 0,
+      enabled_sources: 0,
+      processed_count: 0,
+      today_count: 0,
+    });
+  }
+
   try {
     const total = db.prepare("SELECT COUNT(*) as count FROM articles").get() as { count: number };
     const sources = db.prepare(

@@ -54,12 +54,7 @@ jobs:
       - name: Run Jest tests
         run: npm test
 
-      - name: Create database directory
-        run: mkdir -p /data
-
       - name: Build
-        env:
-          DATABASE_PATH: /data/ai-radar.db
         run: npm run build
 
   # ── Docker Compose validation ───────────────────────────────

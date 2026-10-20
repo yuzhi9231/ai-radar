@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import Database from "better-sqlite3";
-import { join } from "path";
-
-const dbPath = process.env.DATABASE_PATH || "/data/ai-radar.db";
-const db = new Database(dbPath, { readonly: true });
-
-// Enable WAL mode for better concurrent reads
-db.pragma("journal_mode = WAL");
+import { getDb } from "@/lib/db";
 
 export async function GET() {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json([]);
+  }
+
   try {
     const articles = db.prepare(`
       SELECT
