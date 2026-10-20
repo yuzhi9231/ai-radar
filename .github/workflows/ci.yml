@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Collector (Python) ──────────────────────────────────────
+  collector:
+    name: Collector (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run integration tests
+        env:
+          USE_MOCK_AI: "true"
+        run: pytest tests/ -v --tb=short
+
+  # ── Web (Node.js) ───────────────────────────────────────────
+  web:
+    name: Web (Node.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (skip native build)
+        run: npm install --ignore-scripts
+
+      - name: Run Jest tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # ── Docker Compose validation ───────────────────────────────
+  docker-compose:
+    name: Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose config --quiet
+
+      - name: Check compose up (no pull)
+        run: docker compose up -d --no-build --pull never
+
+      - name: Stop containers
+        run: docker compose down
+        if: always()
