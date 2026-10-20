@@ -13,6 +13,15 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
+export function CardDescription({
+	className,
+	...props
+}: React.ComponentProps<"p">) {
+	return (
+		<p className={cn("text-sm text-muted-foreground", className)} {...props} />
+	);
+}
+
 export function CardHeader({
 	className,
 	...props
