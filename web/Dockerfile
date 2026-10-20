@@ -20,6 +20,8 @@ COPY . .
 ARG DATABASE_PATH
 ENV DATABASE_PATH=${DATABASE_PATH}
 
+RUN mkdir -p "$(dirname ${DATABASE_PATH})"
+
 RUN npm run build
 
 # Stage 3: Production
