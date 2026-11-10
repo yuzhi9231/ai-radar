@@ -913,6 +913,36 @@ class TestRepair:
 
         assert report["fixed"] == 1
 
+    def test_og_title_with_site_suffix_matches(self, temp_db: Path):
+        """og:title carries the site suffix ("Title | TechCrunch"); raw_title does not."""
+        from collector import repair
+        from collector.urls import normalize_article_url
+
+        article = self._dash_article()
+        with patch.object(
+            repair, "fetch_og_title", return_value="Alpha runs on device | TechCrunch"
+        ):
+            report = repair.repair_urls()
+
+        assert report["fixed"] == 1
+        stored = get_article_by_id(article.id)
+        assert stored.source_url == normalize_article_url(article.source_url)
+
+    def test_og_title_with_site_name_in_front_matches(self, temp_db: Path):
+        """Some pages put the site first: "TechCrunch - Alpha runs on device"."""
+        from collector import repair
+        from collector.urls import normalize_article_url
+
+        article = self._dash_article()
+        with patch.object(
+            repair, "fetch_og_title", return_value="TechCrunch - Alpha runs on device"
+        ):
+            report = repair.repair_urls()
+
+        assert report["fixed"] == 1
+        stored = get_article_by_id(article.id)
+        assert stored.source_url == normalize_article_url(article.source_url)
+
     def test_unverified_row_is_left_alone(self, temp_db: Path):
         """A different og:title means the candidate is not the same article."""
         from collector import repair
