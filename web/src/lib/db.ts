@@ -1,10 +1,52 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
-// Resolving from the process working directory keeps this file loadable by the
-// CommonJS jest runtime as well; import.meta.url would make it ESM-only.
-const requireModule = createRequire(path.join(process.cwd(), "index.js"));
+// createRequire needs a module URL; a plain path is not accepted. Resolving from the
+// process working directory keeps this module loadable by the jest runtime, where
+// import.meta.url is not available.
+const requireModule = createRequire(
+	pathToFileURL(path.join(process.cwd(), "index.js")).href,
+);
+
+type ModuleLoader = () => unknown;
+
+// The two runtimes provide different module loaders. Next.js bundles this file as ESM,
+// where its createRequire shim cannot resolve a runtime path and only the bundler's own
+// require works; the jest runtime has no require, where only createRequire works. Each
+// optional SQLite driver is loaded through whichever of the two the runtime provides, and
+// the requires below must stay literal so the bundler can externalise them.
+export function loadModule(
+	bundlerRequire: ModuleLoader | null,
+	createRequireLoader: ModuleLoader | null,
+): unknown {
+	if (bundlerRequire) {
+		return bundlerRequire();
+	}
+	if (createRequireLoader) {
+		return createRequireLoader();
+	}
+	throw new Error("no module loader available");
+}
+
+function loadBetterSqlite3(): unknown {
+	return loadModule(
+		typeof require === "function" ? () => require("better-sqlite3") : null,
+		typeof requireModule === "function"
+			? () => requireModule("better-sqlite3")
+			: null,
+	);
+}
+
+function loadNodeSqlite(): unknown {
+	return loadModule(
+		typeof require === "function" ? () => require("node:sqlite") : null,
+		typeof requireModule === "function"
+			? () => requireModule("node:sqlite")
+			: null,
+	);
+}
 
 export interface Prepared {
 	get: (...params: unknown[]) => unknown;
@@ -29,17 +71,22 @@ function resolveDbPath(): string {
 
 function openBetterSqlite3(file: string): Queryable | null {
 	try {
-		const Database = requireModule("better-sqlite3");
+		const Database = loadBetterSqlite3() as new (
+			file: string,
+			options?: { readonly?: boolean },
+		) => Queryable;
 		const db = new Database(file, { readonly: true });
 		// A readonly connection cannot change the journal mode; the collector
 		// process that owns the file has already set WAL. Reading still works, so
 		// a failure here must not make the whole DB unavailable.
-		try {
-			db.pragma("journal_mode = WAL");
-		} catch {
-			// journal mode left as whatever the file already has
+		if (typeof db.pragma === "function") {
+			try {
+				db.pragma("journal_mode = WAL");
+			} catch {
+				// journal mode left as whatever the file already has
+			}
 		}
-		return db as Queryable;
+		return db;
 	} catch (err) {
 		console.warn(
 			`better-sqlite3 unavailable: ${(err as Error).message.split("\n")[0]}`,
@@ -54,7 +101,7 @@ function openNodeSqlite(file: string): Queryable | null {
 		pragma: (sql: string) => unknown;
 	};
 	try {
-		const mod = requireModule("node:sqlite") as {
+		const mod = loadNodeSqlite() as {
 			DatabaseSync: new (
 				path: string,
 				options?: { open?: boolean; readOnly?: boolean },
