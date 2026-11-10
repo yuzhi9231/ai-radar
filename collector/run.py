@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import signal
 from datetime import datetime, timezone
 
-from .ai import AI_PROVIDER, USE_MOCK_AI, process_article
+from .ai import AI_BASE_URL, AI_MODEL, AI_PROVIDER, USE_MOCK_AI, process_article
 from .collectors import collect_all
 from .db import (
     create_pipeline_run,
@@ -182,7 +181,7 @@ def run_manual() -> None:
     mode = (
         "mock (explicitly enabled)"
         if USE_MOCK_AI
-        else f"{AI_PROVIDER} @ {os.environ.get('OLLAMA_BASE_URL', 'not set')}"
+        else f"{AI_PROVIDER} @ {AI_BASE_URL} ({AI_MODEL})"
     )
     print(f"[{datetime.now(timezone.utc).isoformat()}] Starting manual collection...")
     print(f"  AI mode: {mode}")

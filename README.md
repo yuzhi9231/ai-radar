@@ -71,10 +71,24 @@ Copy-Item .env.example .env
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `DATABASE_URL` | `file:/data/ai-radar.db` | SQLite 数据库路径 |
-| `OLLAMA_BASE_URL` | `http://ollama:11434` | Ollama API 地址 |
+| `DATABASE_URL` | `file:/data/ai-radar.db` | SQLite 数据库路径（Windows 下写绝对路径，如 `file:G:/data/ai-radar.db`） |
+| `AI_PROVIDER` | `ollama` | `ollama` 或 `openai`（任何 OpenAI 兼容接口） |
+| `AI_BASE_URL` | `http://ollama:11434` | 模型服务地址（`OLLAMA_BASE_URL` 仍作为别名读取） |
+| `AI_MODEL` | `qwen3.6-35b-a3b-ud-q4_k_m` | 模型名（`OLLAMA_MODEL` 仍作为别名读取） |
+| `AI_TIMEOUT` | `120` | 单次请求超时，秒（`OLLAMA_TIMEOUT` 仍作为别名） |
+| `AI_MAX_TOKENS` | `2000` | 输出上限；推理模型需要比答案本身更多的余量 |
 | `USE_MOCK_AI` | `false` | 使用 Mock AI 模式（开发/测试用） |
 | `SCHEDULE` | `10:00,15:00` | 采集时间（Asia/Singapore） |
+
+当前本地使用的模型是 Strata 上的 `qwen3.8-flash-next-iq2_xs`（OpenAI 兼容接口），`.env` 里对应：
+
+```
+AI_PROVIDER=openai
+AI_BASE_URL=http://localhost:8080
+AI_MODEL=qwen3.8-flash-next-iq2_xs
+DATABASE_URL=file:G:/data/ai-radar.db
+```
+
 
 ## 开发
 
@@ -98,7 +112,7 @@ npm run dev
 
 ### Mock AI 模式
 
-设置 `USE_MOCK_AI=true` 可在没有 Ollama 的情况下运行完整 pipeline，所有 AI 处理都会返回模拟数据。适用于：
+设置 `USE_MOCK_AI=true` 可在没有模型服务（Ollama 或任何 OpenAI 兼容接口）的情况下运行完整 pipeline，所有 AI 处理都会返回模拟数据。适用于：
 - 本地开发（无需下载大模型）
 - 集成测试
 - 快速验证功能

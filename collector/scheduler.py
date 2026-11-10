@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from .ai import AI_BASE_URL, AI_MODEL, AI_PROVIDER
 from .run import install_signal_handlers, run_pipeline
 
 
@@ -53,8 +54,9 @@ def main() -> None:
     """Entry point for the scheduler service."""
     print("AI Radar Collector Scheduler")
     print(f"  USE_MOCK_AI: {os.environ.get('USE_MOCK_AI', 'false')}")
-    print(f"  AI_PROVIDER: {os.environ.get('AI_PROVIDER', 'ollama')}")
-    print(f"  OLLAMA_BASE_URL: {os.environ.get('OLLAMA_BASE_URL', 'not set')}")
+    print(f"  AI_PROVIDER: {AI_PROVIDER}")
+    print(f"  AI_BASE_URL: {AI_BASE_URL}")
+    print(f"  AI_MODEL: {AI_MODEL}")
     print()
 
     install_signal_handlers()
