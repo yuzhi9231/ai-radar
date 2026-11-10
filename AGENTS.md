@@ -21,7 +21,7 @@
 2. **前端**：Next.js 15 App Router + TypeScript + Tailwind + shadcn/ui。
 3. **采集服务**：Python 3.12+，feedparser + httpx + APScheduler。
 4. **数据库**：SQLite（单文件，Docker volume 持久化到 G 盘）。
-5. **AI 模型**：Ollama 本地运行 Qwen3.6-35B-A3B，通过 OpenAI 兼容 API。
+5. **AI 模型**：本地模型服务，通过 OpenAI 兼容 API。默认后端为 Strata（`qwen3.8-flash-next-iq2_xs`），Ollama 仍是可选后端，见 ADR-011。
 6. **数据源**（Phase 1 仅 3 个）：TechCrunch AI RSS、The Verge AI RSS、Hacker News Algolia API。
 7. **去重**：URL 精确匹配 + 标题编辑距离，不做语义聚类。
 8. **收藏**：localStorage，无后端用户系统。

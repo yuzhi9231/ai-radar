@@ -1,6 +1,6 @@
 # AI Radar · 设计决策记录 (ADRs)
 
-> 最后更新：2026-10-20
+> 最后更新：2026-11-10
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## ADR-002：AI 加工 — 本地 Ollama 模型
 
-**状态**：已决定
+**状态**：已决定（默认后端由 ADR-011 取代，Ollama 仍是可选后端）
 **决策**：AI 加工（摘要生成、分类、评分）使用本地 Ollama 服务，模型为 Qwen3.6-35B-A3B-UD-Q4_K_M（MoE：35B 总参数，3B 激活参数）。
 
 **理由**：
@@ -189,3 +189,24 @@
 **注意事项**：
 - Docker Desktop for Windows 中需要确保 G 盘被共享
 - docker-compose.yml 中使用绝对路径（如 `G:/AI早报/ai-radar/data/`）
+
+---
+
+## ADR-011：AI 层 — 默认使用本地 OpenAI 兼容服务（Strata）
+
+**状态**：已决定（2026-11-10，取代 ADR-002 的默认后端）
+
+**决策**：
+- AI 加工默认调用本地 Strata 服务（OpenAI 兼容 `/v1/chat/completions`），模型为 `qwen3.8-flash-next-iq2_xs`
+- 环境变量以 `AI_PROVIDER` / `AI_BASE_URL` / `AI_MODEL` / `AI_TIMEOUT` 为准，`OLLAMA_*` 作为别名继续读取
+- Ollama 仍是可选后端：`AI_PROVIDER=ollama` 时走 `/api/generate`
+
+**理由**：
+- 本机没有可用的 Ollama 服务，`http://ollama:11434` 在宿主机上无法解析，历史数据全部 `generation_status = failed`
+- Strata 端点已验证可用（约 2.5 秒/条），输出为合法 JSON，中文质量满足需求
+- 名称与后端解耦：换模型只改 `.env`，不改代码
+
+**注意事项**：
+- 推理模型偶发返回空答案或纯叙述文本，`AI_MAX_TOKENS` 需要留有余量；失败行由 `reprocess` 重跑
+- Windows 下 `DATABASE_URL` 必须带盘符，否则 `/data/...` 会按进程当前盘解析
+

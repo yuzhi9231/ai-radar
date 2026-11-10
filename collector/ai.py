@@ -15,9 +15,19 @@ import httpx
 from .models import Article, ProcessedArticle
 
 AI_PROVIDER = os.environ.get("AI_PROVIDER", "ollama").lower()
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://ollama:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.6-35b-a3b-ud-q4_k_m")
-OLLAMA_TIMEOUT = int(os.environ.get("OLLAMA_TIMEOUT", "120"))
+
+# AI_BASE_URL / AI_MODEL / AI_TIMEOUT are the canonical names because the AI layer is
+# any OpenAI-compatible server, not necessarily Ollama. The OLLAMA_* names are still
+# read as fallbacks so existing .env files and docker-compose setups keep working.
+AI_BASE_URL = os.environ.get("AI_BASE_URL") or os.environ.get(
+    "OLLAMA_BASE_URL", "http://ollama:11434"
+)
+AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get(
+    "OLLAMA_MODEL", "qwen3.6-35b-a3b-ud-q4_k_m"
+)
+AI_TIMEOUT = int(
+    os.environ.get("AI_TIMEOUT") or os.environ.get("OLLAMA_TIMEOUT", "120")
+)
 # Reasoning models need headroom beyond the answer itself
 AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "2000"))
 USE_MOCK_AI = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
@@ -74,11 +84,11 @@ def _call_model(article: Article) -> tuple[Optional[dict], Optional[str]]:
 
 def _call_ollama(article: Article) -> tuple[Optional[dict], Optional[str]]:
     """Call Ollama API. Returns (result, error) with exactly one of the two set."""
-    url = f"{OLLAMA_BASE_URL}/api/generate"
+    url = f"{AI_BASE_URL}/api/generate"
     user_content = _build_user_content(article)
 
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": AI_MODEL,
         "prompt": SYSTEM_PROMPT + "\n\n请分析以下新闻：\n" + user_content,
         "system": "你只输出 JSON，不要输出任何其他内容。",
         "stream": False,
@@ -89,7 +99,7 @@ def _call_ollama(article: Article) -> tuple[Optional[dict], Optional[str]]:
     }
 
     try:
-        with httpx.Client(timeout=OLLAMA_TIMEOUT) as client:
+        with httpx.Client(timeout=AI_TIMEOUT) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             response_text = resp.json().get("response", "")
@@ -101,11 +111,11 @@ def _call_ollama(article: Article) -> tuple[Optional[dict], Optional[str]]:
 
 def _call_openai_compatible(article: Article) -> tuple[Optional[dict], Optional[str]]:
     """Call an OpenAI-compatible /v1/chat/completions endpoint."""
-    url = f"{OLLAMA_BASE_URL}/v1/chat/completions"
+    url = f"{AI_BASE_URL}/v1/chat/completions"
     user_content = _build_user_content(article)
 
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": AI_MODEL,
         "messages": [
             {"role": "system", "content": "你只输出 JSON，不要输出任何其他内容。"},
             {
@@ -118,7 +128,7 @@ def _call_openai_compatible(article: Article) -> tuple[Optional[dict], Optional[
     }
 
     try:
-        with httpx.Client(timeout=OLLAMA_TIMEOUT) as client:
+        with httpx.Client(timeout=AI_TIMEOUT) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
