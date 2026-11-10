@@ -8,7 +8,7 @@ import { ArticleFilterBar } from "@/components/article-filter-bar";
 import { ArticleSkeleton } from "@/components/article-skeleton";
 import { LoadMore } from "@/components/load-more";
 
-interface Article {
+export interface Article {
 	id: string;
 	source_url: string;
 	source_name: string;
@@ -24,6 +24,7 @@ interface Article {
 	tags: string[];
 	importance_score: number;
 	generation_status: string;
+	error?: string | null;
 }
 
 interface ArticleGridProps {
@@ -44,7 +45,6 @@ export function ArticleGrid({ initialArticles }: ArticleGridProps) {
 	const [limit] = useState(12);
 	const [offset, setOffset] = useState(initialArticles?.length || 0);
 	const [loading, setLoading] = useState(initialArticles === undefined);
-	const [isLoadingMore, setIsLoadingMore] = useState(false);
 
 	const loadArticles = useCallback(
 		async (f: typeof filters, l: number, o: number) => {
@@ -86,15 +86,10 @@ export function ArticleGrid({ initialArticles }: ArticleGridProps) {
 	};
 
 	const handleLoadMore = async () => {
-		setIsLoadingMore(true);
-		try {
-			const res = await loadArticles(filters, limit, offset);
-			setArticles((prev) => [...prev, ...res.articles]);
-			setTotal(res.total);
-			setOffset(offset + res.articles.length);
-		} finally {
-			setIsLoadingMore(false);
-		}
+		const res = await loadArticles(filters, limit, offset);
+		setArticles((prev) => [...prev, ...res.articles]);
+		setTotal(res.total);
+		setOffset(offset + res.articles.length);
 	};
 
 	if (loading) {

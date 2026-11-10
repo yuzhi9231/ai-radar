@@ -12,6 +12,7 @@ type Brief = {
 	trend_summary?: string;
 	highlights: { headline: string; summary: string; tags?: string[] }[];
 	dev_focus: { headline: string; summary: string; tags?: string[] }[];
+	generation_status?: string;
 } | null;
 
 function SourceDistribution({ articles }: { articles: any[] }) {
@@ -68,6 +69,15 @@ function BriefContent({ brief, date }: { brief: Brief; date: string }) {
 
 	return (
 		<div className="space-y-6">
+			{brief.generation_status && brief.generation_status !== "success" && (
+				<Card className="border-destructive/40">
+					<CardContent className="pt-6 text-sm text-muted-foreground">
+						AI 未生成这份简报（status: {brief.generation_status}
+						），以下内容为回退显示。
+					</CardContent>
+				</Card>
+			)}
+
 			{/* Trend Summary */}
 			{brief.trend_summary && (
 				<Card>

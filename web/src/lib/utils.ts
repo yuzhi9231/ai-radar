@@ -38,3 +38,15 @@ export function getInitials(name: string): string {
 export function formatNumber(n: number): string {
 	return n.toLocaleString();
 }
+
+/** Display label for a pipeline run status. Unknown values are shown as-is. */
+export function runStatusLabel(status: string): string {
+	const labels: Record<string, string> = {
+		running: "运行中",
+		success: "成功",
+		partial_failure: "部分失败",
+		failed: "失败",
+		interrupted: "中断",
+	};
+	return labels[status] ?? status;
+}

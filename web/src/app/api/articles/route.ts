@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { parseJsonArray } from "@/lib/parse";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -7,23 +8,23 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json([]);
 	}
 
-	const { searchParams } = new URL(req.url);
-	const source = searchParams.get("source");
-	const category = searchParams.get("category");
-	const sort = searchParams.get("sort") || "newest";
-	const limit = Math.min(
-		Number.parseInt(searchParams.get("limit") || "20"),
-		50,
-	);
-	const offset = Number.parseInt(searchParams.get("offset") || "0");
-
 	try {
+		const { searchParams } = new URL(req.url);
+		const source = searchParams.get("source");
+		const category = searchParams.get("category");
+		const sort = searchParams.get("sort") || "newest";
+		const limit = Math.min(
+			Number.parseInt(searchParams.get("limit") || "20"),
+			50,
+		);
+		const offset = Number.parseInt(searchParams.get("offset") || "0");
+
 		let query = `
       SELECT
         a.id, a.source_url, a.source_name, a.source,
         a.raw_title, a.raw_description, a.published_at, a.fetched_at, a.language,
         pa.headline_zh, pa.summary_zh, pa.category,
-        pa.tags, pa.importance_score, pa.generation_status
+        pa.tags, pa.importance_score, pa.generation_status, pa.error
       FROM articles a
       LEFT JOIN processed_articles pa ON a.id = pa.article_id
     `;
@@ -68,10 +69,10 @@ export async function GET(req: NextRequest) {
 
 		const articles = db.prepare(query).all(...params) as any[];
 
-		// Parse JSON columns
+		// Parse JSON columns (a corrupt stored value must not break the whole response)
 		const result = articles.map((a) => ({
 			...a,
-			tags: a.tags ? JSON.parse(a.tags) : [],
+			tags: parseJsonArray(a.tags),
 			source: a.source as string,
 		}));
 

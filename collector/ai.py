@@ -1,6 +1,7 @@
 """AI processing module for AI Radar.
 
-Processes articles through Ollama (local) or uses mock mode for testing.
+Processes articles through a local model server (Ollama or any OpenAI-compatible
+API), or uses mock mode when it is explicitly enabled.
 """
 
 from __future__ import annotations
@@ -13,9 +14,12 @@ import httpx
 
 from .models import Article, ProcessedArticle
 
+AI_PROVIDER = os.environ.get("AI_PROVIDER", "ollama").lower()
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://ollama:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.6-35b-a3b-ud-q4_k_m")
 OLLAMA_TIMEOUT = int(os.environ.get("OLLAMA_TIMEOUT", "120"))
+# Reasoning models need headroom beyond the answer itself
+AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "2000"))
 USE_MOCK_AI = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
 
 CATEGORIES = [
@@ -61,8 +65,15 @@ def _build_user_content(article: Article) -> str:
     return content
 
 
-def _call_ollama(article: Article) -> Optional[dict]:
-    """Call Ollama API to process a single article."""
+def _call_model(article: Article) -> tuple[Optional[dict], Optional[str]]:
+    """Call the configured model server. Returns (result, error), one of the two set."""
+    if AI_PROVIDER == "openai":
+        return _call_openai_compatible(article)
+    return _call_ollama(article)
+
+
+def _call_ollama(article: Article) -> tuple[Optional[dict], Optional[str]]:
+    """Call Ollama API. Returns (result, error) with exactly one of the two set."""
     url = f"{OLLAMA_BASE_URL}/api/generate"
     user_content = _build_user_content(article)
 
@@ -73,7 +84,7 @@ def _call_ollama(article: Article) -> Optional[dict]:
         "stream": False,
         "options": {
             "temperature": 0.3,
-            "num_predict": 512,
+            "num_predict": AI_MAX_TOKENS,
         },
     }
 
@@ -81,20 +92,58 @@ def _call_ollama(article: Article) -> Optional[dict]:
         with httpx.Client(timeout=OLLAMA_TIMEOUT) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
-            result = resp.json()
-            response_text = result.get("response", "")
-    except Exception:
-        return None
+            response_text = resp.json().get("response", "")
+    except Exception as e:
+        return None, f"Ollama request failed: {e}"
 
-    # Extract JSON from response (model may include markdown formatting)
-    json_str = _extract_json(response_text)
-    if not json_str:
-        return None
+    return _parse_model_text(response_text)
+
+
+def _call_openai_compatible(article: Article) -> tuple[Optional[dict], Optional[str]]:
+    """Call an OpenAI-compatible /v1/chat/completions endpoint."""
+    url = f"{OLLAMA_BASE_URL}/v1/chat/completions"
+    user_content = _build_user_content(article)
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": "你只输出 JSON，不要输出任何其他内容。"},
+            {
+                "role": "user",
+                "content": SYSTEM_PROMPT + "\n\n请分析以下新闻：\n" + user_content,
+            },
+        ],
+        "temperature": 0.3,
+        "max_tokens": AI_MAX_TOKENS,
+    }
 
     try:
-        return json.loads(json_str)
-    except json.JSONDecodeError:
-        return None
+        with httpx.Client(timeout=OLLAMA_TIMEOUT) as client:
+            resp = client.post(url, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            choices = data.get("choices") or []
+            message = (choices[0].get("message") or {}) if choices else {}
+            response_text = message.get("content") or ""
+    except Exception as e:
+        return None, f"AI request failed: {e}"
+
+    return _parse_model_text(response_text)
+
+
+def _parse_model_text(text: str) -> tuple[Optional[dict], Optional[str]]:
+    """Parse the model reply into the JSON object it was asked to produce."""
+    if not text:
+        return None, "model returned an empty answer (raise AI_MAX_TOKENS)"
+
+    json_str = _extract_json(text)
+    if not json_str:
+        return None, "model returned no JSON"
+
+    try:
+        return json.loads(json_str), None
+    except json.JSONDecodeError as e:
+        return None, f"invalid JSON from model: {e}"
 
 
 def _extract_json(text: str) -> Optional[str]:
@@ -134,7 +183,7 @@ def process_article(article: Article) -> ProcessedArticle:
     if USE_MOCK_AI:
         return process_article_mock(article)
 
-    result = _call_ollama(article)
+    result, error = _call_model(article)
 
     if result is None:
         return ProcessedArticle(
@@ -142,6 +191,7 @@ def process_article(article: Article) -> ProcessedArticle:
             headline_zh=article.raw_title,
             summary_zh=article.raw_description or "摘要生成失败，请稍后重试。",
             generation_status="failed",
+            error=error,
         )
 
     # Validate required fields
@@ -167,7 +217,7 @@ def process_article(article: Article) -> ProcessedArticle:
         importance_score=score,
         source_confidence=result.get("source_confidence", 0.5),
         related_entities=result.get("related_entities", []),
-        generation_status="success" if result else "failed",
+        generation_status="success",
     )
 
 
