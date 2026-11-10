@@ -207,6 +207,6 @@
 - 名称与后端解耦：换模型只改 `.env`，不改代码
 
 **注意事项**：
-- 推理模型偶发返回空答案或纯叙述文本，`AI_MAX_TOKENS` 需要留有余量；失败行由 `reprocess` 重跑
+- 推理模型的思考（reasoning）也计入 `AI_MAX_TOKENS`，默认 4000；仍偶发返回空答案或纯叙述文本，失败行由 `reprocess` 重跑
 - Windows 下 `DATABASE_URL` 必须带盘符，否则 `/data/...` 会按进程当前盘解析
 
