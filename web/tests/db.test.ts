@@ -17,6 +17,7 @@ import {
 	getLatestBrief,
 	getLatestRun,
 	getStats,
+	loadModule,
 } from "@/lib/db";
 
 // createRequire needs a module path; using cwd keeps the test free of import.meta
@@ -298,5 +299,29 @@ describe("db with a fixture database", () => {
 		expect(run?.articles_fetched).toBe(3);
 		expect(run?.articles_processed).toBe(1);
 		expect(run?.articles_failed).toBe(1);
+	});
+});
+
+describe("module loader", () => {
+	it("prefers the bundler's require, which is the only loader the Next.js bundle has", () => {
+		const bundlerRequire = jest.fn(() => "driver via the bundler");
+		const createRequireLoader = jest.fn(() => "driver via createRequire");
+		// The bundle's createRequire shim cannot resolve a runtime path, so it must not
+		// be used when the bundler's require is available.
+		expect(loadModule(bundlerRequire, createRequireLoader)).toBe(
+			"driver via the bundler",
+		);
+		expect(createRequireLoader).not.toHaveBeenCalled();
+	});
+
+	it("falls back to createRequire when the runtime has no require, as the jest runtime does", () => {
+		const createRequireLoader = jest.fn(() => "driver via createRequire");
+		expect(loadModule(null, createRequireLoader)).toBe(
+			"driver via createRequire",
+		);
+	});
+
+	it("reports that no loader is available instead of returning undefined", () => {
+		expect(() => loadModule(null, null)).toThrow("no module loader available");
 	});
 });
