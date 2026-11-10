@@ -56,7 +56,7 @@ AI 从业者、开发者和产品设计者每天需要花大量时间从多个�
 ### 架构决策
 
 - **部署方式**：Docker Compose Monorepo，包含三个服务（web、collector、ollama）。新机器通过 `docker compose up -d` 即可启动全部服务。
-- **项目位置**：`G:\AI早报\AI Radar`。所有 Docker volume 和数据文件通过绝对路径挂载到 G 盘。
+- **项目位置**：`G:\AI早报\ai-radar`。所有 Docker volume 和数据文件通过绝对路径挂载到 G 盘。
 - **公开仓库**：项目代码将推送到公开 Git 仓库，他人可 fork 使用。
 
 ### 技术栈决策

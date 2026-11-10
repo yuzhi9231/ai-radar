@@ -190,7 +190,7 @@ export default function AboutPage() {
 								<p className="font-medium">克隆并进入项目</p>
 								<pre className="mt-1 rounded bg-muted p-2 text-xs">
 									{`git clone https://github.com/yuzhi9231/ai-radar.git
-cd "G:\\AI早报\\AI Radar"`}
+cd ai-radar`}
 								</pre>
 							</div>
 						</div>

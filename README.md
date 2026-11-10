@@ -43,7 +43,7 @@ AI Radar 是一个自动化 AI 行业新闻采集与智能摘要工具。它每�
 ### 一键启动
 
 ```powershell
-cd "G:\AI早报\AI Radar"
+cd "G:\AI早报\ai-radar"
 docker compose up -d
 ```
 

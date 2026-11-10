@@ -1,19 +1,19 @@
 # AI Radar — Agent 工作指南
 
-> 最后更新：2026-10-20
+> 最后更新：2026-11-10
 
 ## 项目现状
 
 - 阶段：Phase 1 集成测试阶段
 - 代码：已完成 collector（Python）、web（Next.js）、Docker Compose、集成测试
-- Git：已初始化，无远程，无提交
-- 分支：`feature/integration-testing`（当前）
+- Git：远程 `github.com/yuzhi9231/ai-radar`，所有修改走短命分支 + PR
+- 工作副本：`G:\AI早报\ai-radar`（唯一在用的工作副本；旧的 `G:\AI早报\AI Radar` 副本已删除）
 
 ## 关键约束
 
 - **C 盘仅剩 ~43GB，所有数据必须放 G 盘**：Docker volume、SQLite 数据库、Ollama 模型数据全部挂载到 G 盘路径。
-- **项目根目录**：`G:\AI早报\AI Radar`
-- **磁盘路径注意**：PowerShell 中中文路径需用双引号包裹，如 `cd "G:\AI早报\AI Radar"`。
+- **项目根目录**：`G:\AI早报\ai-radar`
+- **磁盘路径注意**：PowerShell 中中文路径需用双引号包裹，如 `cd "G:\AI早报\ai-radar"`。
 
 ## 核心决策（不可在 Phase 1 推翻）
 
@@ -90,15 +90,15 @@ Start-Sleep -Seconds 300; gh run view <run_id> --repo yuzhi9231/ai-radar --json 
 
 ```powershell
 # 1. 先建分支（从 main 最新）
-git -C "G:\AI早报\AI Radar" checkout main
-git -C "G:\AI早报\AI Radar" pull origin main
-git -C "G:\AI早报\AI Radar" checkout -b feature/<描述>
+git -C "G:\AI早报\ai-radar" checkout main
+git -C "G:\AI早报\ai-radar" pull origin main
+git -C "G:\AI早报\ai-radar" checkout -b feature/<描述>
 
 # 2. 在分支上做修改和提交
 # （可以多次 commit，不需要完美）
 
 # 3. 推分支 + 开 PR
-git -C "G:\AI早报\AI Radar" push origin feature/<描述>
+git -C "G:\AI早报\ai-radar" push origin feature/<描述>
 gh pr create --base main --head feature/<描述> --title "fix: <标题>" --body ""
 
 # 4. 盯 CI（PR 上的 Checks）
@@ -110,8 +110,8 @@ Start-Sleep -Seconds 300; gh run list --repo yuzhi9231/ai-radar --pr <number>
 gh pr merge <number> --squash --delete-branch
 
 # 6. 收尾
-git -C "G:\AI早报\AI Radar" checkout main
-git -C "G:\AI早报\AI Radar" pull origin main
+git -C "G:\AI早报\ai-radar" checkout main
+git -C "G:\AI早报\ai-radar" pull origin main
 ```
 
 **例外**：纯 `.gitignore`、`.env.example` 等配置文件的微小调整可以直推 main，但首次此类修改也先走分支确认。
