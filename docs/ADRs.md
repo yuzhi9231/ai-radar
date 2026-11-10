@@ -178,7 +178,7 @@
 
 **状态**：已决定
 **决策**：
-- 项目代码位于 `G:\AI早报\AI Radar`
+- 项目代码位于 `G:\AI早报\ai-radar`
 - Docker volume 和数据文件通过绝对路径挂载到 G 盘
 - `.env` 中配置 SQLite 数据库路径为 G 盘路径
 
@@ -189,6 +189,7 @@
 **注意事项**：
 - Docker Desktop for Windows 中需要确保 G 盘被共享
 - docker-compose.yml 中使用绝对路径（如 `G:/AI早报/ai-radar/data/`）
+- 本地（不走 Docker）时数据库在 `G:\data\ai-radar.db`：collector 用 `.env` 的 `DATABASE_URL`，web 用 `web\.env.local` 的 `DATABASE_PATH` 指向同一个文件
 
 ---
 
