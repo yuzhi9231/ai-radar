@@ -57,9 +57,11 @@ export async function GET(req: NextRequest) {
 		query += " LIMIT ? OFFSET ?";
 		params.push(limit, offset);
 
-		// Count total (without LIMIT/OFFSET, with filter params only)
+		// Count total (without LIMIT/OFFSET, with filter params only). The join must stay
+		// here: the category filter reads pa.category, and a count query without it fails.
 		const filterParams = params.slice(0, -2) as any[];
-		let totalQuery = "SELECT COUNT(*) as count FROM articles a";
+		let totalQuery =
+			"SELECT COUNT(*) as count FROM articles a LEFT JOIN processed_articles pa ON a.id = pa.article_id";
 		if (whereClauses.length > 0) {
 			totalQuery += ` WHERE ${whereClauses.join(" AND ")}`;
 		}
