@@ -28,7 +28,10 @@ export function RunCollection({ onFinished }: RunCollectionProps) {
 		setMessage(null);
 
 		try {
-			const res = await fetch("/api/run", { method: "POST", cache: "no-store" });
+			const res = await fetch("/api/run", {
+				method: "POST",
+				cache: "no-store",
+			});
 			const data = (await res.json()) as RunResponse;
 
 			if (!res.ok || !data.ok) {

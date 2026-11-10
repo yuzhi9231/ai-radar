@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 
 // The web layer only reads SQLite; the collector is a separate process. This route
 // shells out to it, which works only when the collector lives on this machine.
-const RUN_TIMEOUT_MS = 300_000;
+// A full run is fetch + one model call per new article, so give it room: a slow
+// network plus a couple of minutes of model time is normal.
+const RUN_TIMEOUT_MS = 600_000;
 
 // One run at a time: two concurrent pipelines would fight over the same SQLite file.
 let running = false;
@@ -30,7 +32,9 @@ function parseSummary(stdout: string): RunSummary {
 		return match ? Number.parseInt(match[1], 10) : null;
 	};
 
-	const processed = stdout.match(/Processed:\s*(\d+)\s*ok\s*\/\s*(\d+)\s*failed/);
+	const processed = stdout.match(
+		/Processed:\s*(\d+)\s*ok\s*\/\s*(\d+)\s*failed/,
+	);
 	const status = stdout.match(/Status:\s*(\S+)/);
 
 	return {
@@ -73,7 +77,9 @@ function runCollector(root: string): Promise<RunSummary> {
 				resolve(parseSummary(stdout));
 			} else {
 				reject(
-					new Error(stderr.trim() || `collector 退出码 ${code}（模型服务在跑吗？）`),
+					new Error(
+						stderr.trim() || `collector 退出码 ${code}（模型服务在跑吗？）`,
+					),
 				);
 			}
 		});
@@ -93,7 +99,8 @@ export async function POST() {
 		return NextResponse.json(
 			{
 				ok: false,
-				error: "这台机器上找不到 collector，请手动运行 python -m collector.cli run",
+				error:
+					"这台机器上找不到 collector，请手动运行 python -m collector.cli run",
 			},
 			{ status: 503 },
 		);
