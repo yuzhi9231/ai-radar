@@ -7,6 +7,7 @@ import { ArticleCard } from "@/components/article-card";
 import { ArticleFilterBar } from "@/components/article-filter-bar";
 import { ArticleSkeleton } from "@/components/article-skeleton";
 import { LoadMore } from "@/components/load-more";
+import { RunCollection } from "@/components/run-collection";
 
 export interface Article {
 	id: string;
@@ -92,13 +93,29 @@ export function ArticleGrid({ initialArticles }: ArticleGridProps) {
 		setOffset(offset + res.articles.length);
 	};
 
+	// Reload the first page after a run so the new rows show up.
+	const refresh = useCallback(() => {
+		loadArticles(filters, limit, 0)
+			.then((res) => {
+				setArticles(res.articles);
+				setTotal(res.total);
+				setOffset(res.articles.length);
+			})
+			.catch(() => {
+				// The run itself succeeded; a failed reload is not worth an error state.
+			});
+	}, [filters, limit, loadArticles]);
+
 	if (loading) {
 		return <ArticleSkeleton count={limit} />;
 	}
 
 	return (
 		<div className="space-y-6">
-			<ArticleFilterBar onFilterChange={handleFilterChange} />
+			<div className="flex flex-wrap items-center justify-between gap-3">
+				<ArticleFilterBar onFilterChange={handleFilterChange} />
+				<RunCollection onFinished={refresh} />
+			</div>
 
 			{articles.length === 0 ? (
 				<div className="py-12 text-center text-sm text-muted-foreground">
