@@ -31,7 +31,14 @@ function openBetterSqlite3(file: string): Queryable | null {
 	try {
 		const Database = requireModule("better-sqlite3");
 		const db = new Database(file, { readonly: true });
-		db.pragma("journal_mode = WAL");
+		// A readonly connection cannot change the journal mode; the collector
+		// process that owns the file has already set WAL. Reading still works, so
+		// a failure here must not make the whole DB unavailable.
+		try {
+			db.pragma("journal_mode = WAL");
+		} catch {
+			// journal mode left as whatever the file already has
+		}
 		return db as Queryable;
 	} catch (err) {
 		console.warn(

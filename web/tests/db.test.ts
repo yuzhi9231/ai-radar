@@ -257,6 +257,14 @@ describe("db with a fixture database", () => {
 		}
 	});
 
+	it("can open the fixture with a read-only connection", () => {
+		// The fixture is written with the default journal mode: a read-only
+		// connection cannot build the WAL index, so a WAL fixture would not be
+		// readable on the CI runner. The connection must still work.
+		expect(driver).not.toBeNull();
+		expect(getDb()).not.toBeNull();
+	});
+
 	it("counts stored rows by generation status", () => {
 		if (!driver) return;
 		const stats = getStats();
