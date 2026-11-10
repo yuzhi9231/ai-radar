@@ -36,6 +36,22 @@ def _clean_title(value: str) -> str:
     return " ".join(html.unescape(value or "").split()).strip().lower()
 
 
+def _titles_match(live: str, stored: str) -> bool:
+    """True when the live og:title is the stored title.
+
+    Pages usually add the site name to og:title ("Title | TechCrunch", sometimes
+    "TechCrunch - Title"), while the stored raw_title is the RSS title without it, so a
+    strict equality check would reject every candidate from such a source.
+    """
+    live_clean = _clean_title(live)
+    stored_clean = _clean_title(stored)
+    if live_clean == stored_clean:
+        return True
+
+    segments = [segment for segment in re.split(r"\s+[|-]\s+", live_clean) if segment]
+    return len(segments) > 1 and stored_clean in segments
+
+
 def fetch_og_title(url: str) -> str | None:
     """Read og:title from the live page, or None when it cannot be fetched."""
     try:
@@ -68,8 +84,7 @@ def repair_urls(verify: bool = True, dry_run: bool = False) -> dict[str, int]:
         candidate = normalize_article_url(current)
         if verify:
             live = fetch_og_title(candidate)
-            stored = _clean_title(row["raw_title"])
-            if live is None or _clean_title(live) != stored:
+            if live is None or not _titles_match(live, row["raw_title"]):
                 print(f"  unverified: {candidate} (og:title: {live!r})")
                 report["unverified"] += 1
                 continue
