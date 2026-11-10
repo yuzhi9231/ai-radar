@@ -19,7 +19,18 @@ interface ArticleFilterBarProps {
 	}) => void;
 }
 
-const categories = ["", "AI", "Industry", "Research", "Product", "Business"];
+// The filter compares against the label the model wrote, so these must match
+// CATEGORIES in collector/ai.py. The previous English values could never match a row.
+const categories = [
+	"",
+	"大模型/API",
+	"AI Coding/Agent",
+	"AI 产品/工具",
+	"开源项目",
+	"论文/研究",
+	"行业/公司/政策",
+	"general",
+];
 
 const sortOptions = [
 	{ value: "newest", label: "最新" },
