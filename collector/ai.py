@@ -28,8 +28,9 @@ AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get(
 AI_TIMEOUT = int(
     os.environ.get("AI_TIMEOUT") or os.environ.get("OLLAMA_TIMEOUT", "120")
 )
-# Reasoning models need headroom beyond the answer itself
-AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "2000"))
+# Reasoning models spend the token budget on thinking before the answer, so the cap
+# has to cover both. 2000 was enough for most rows but produced empty answers on some.
+AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "4000"))
 USE_MOCK_AI = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
 
 CATEGORIES = [

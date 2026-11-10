@@ -76,7 +76,7 @@ Copy-Item .env.example .env
 | `AI_BASE_URL` | `http://ollama:11434` | 模型服务地址（`OLLAMA_BASE_URL` 仍作为别名读取） |
 | `AI_MODEL` | `qwen3.6-35b-a3b-ud-q4_k_m` | 模型名（`OLLAMA_MODEL` 仍作为别名读取） |
 | `AI_TIMEOUT` | `120` | 单次请求超时，秒（`OLLAMA_TIMEOUT` 仍作为别名） |
-| `AI_MAX_TOKENS` | `2000` | 输出上限；推理模型需要比答案本身更多的余量 |
+| `AI_MAX_TOKENS` | `4000` | 输出上限；推理模型的思考也计入这个预算，所以要比答案本身宽 |
 | `USE_MOCK_AI` | `false` | 使用 Mock AI 模式（开发/测试用） |
 | `SCHEDULE` | `10:00,15:00` | 采集时间（Asia/Singapore） |
 
