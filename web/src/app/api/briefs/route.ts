@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { parseObjectArray } from "@/lib/parse";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -23,8 +24,8 @@ export async function GET(request: Request) {
 
 		const brief = {
 			...row,
-			highlights: row.highlights ? JSON.parse(row.highlights) : [],
-			dev_focus: row.dev_focus ? JSON.parse(row.dev_focus) : [],
+			highlights: parseObjectArray(row.highlights),
+			dev_focus: parseObjectArray(row.dev_focus),
 		};
 
 		return NextResponse.json({ brief });

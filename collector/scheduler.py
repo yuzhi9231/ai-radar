@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 import os
-import sys
 from datetime import datetime, timezone
-
-# Ensure collector package is importable
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from collector.run import run_pipeline
+from .run import install_signal_handlers, run_pipeline
 
 
 def scheduled_job() -> None:
     """Execute the collection pipeline as a scheduled job."""
-    use_mock = os.environ.get("USE_MOCK_AI", "true")
-    if use_mock.lower() == "true":
-        os.environ["USE_MOCK_AI"] = "true"
-
     print(
         f"[{datetime.now(timezone.utc).isoformat()}] Scheduled collection starting..."
     )
@@ -27,6 +19,9 @@ def scheduled_job() -> None:
         run = run_pipeline()
         print(f"  Fetched: {run.articles_fetched}")
         print(f"  New: {run.articles_new}")
+        print(
+            f"  Processed: {run.articles_processed} ok / {run.articles_failed} failed"
+        )
         print(f"  Status: {run.status}")
     except Exception as e:
         print(f"  Error: {e}")
@@ -58,9 +53,11 @@ def main() -> None:
     """Entry point for the scheduler service."""
     print("AI Radar Collector Scheduler")
     print(f"  USE_MOCK_AI: {os.environ.get('USE_MOCK_AI', 'false')}")
+    print(f"  AI_PROVIDER: {os.environ.get('AI_PROVIDER', 'ollama')}")
     print(f"  OLLAMA_BASE_URL: {os.environ.get('OLLAMA_BASE_URL', 'not set')}")
     print()
 
+    install_signal_handlers()
     scheduler = create_scheduler()
 
     try:

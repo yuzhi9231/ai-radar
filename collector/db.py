@@ -21,6 +21,14 @@ from .models import (
 _db_conn: Optional[sqlite3.Connection] = None
 
 
+def _json_column(value: str, default):
+    """Parse a JSON column, falling back to `default` when the stored value is corrupt."""
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return default
+
+
 def get_db_path(db_url: str = "file:/data/ai-radar.db") -> Path:
     """Extract file path from DATABASE_URL."""
     if db_url.startswith("file:"):
@@ -44,6 +52,7 @@ def init_db(db_url: str = "file:/data/ai-radar.db") -> sqlite3.Connection:
     _db_conn.execute("PRAGMA foreign_keys=ON")
 
     _create_tables(_db_conn)
+    _migrate(_db_conn)
     _init_sources(_db_conn)
 
     return _db_conn
@@ -103,6 +112,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             related_entities TEXT NOT NULL DEFAULT '[]',
             generated_at TEXT NOT NULL DEFAULT (datetime('now')),
             generation_status TEXT NOT NULL DEFAULT 'pending',
+            error TEXT,
             FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
         );
 
@@ -143,6 +153,8 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             articles_fetched INTEGER NOT NULL DEFAULT 0,
             articles_new INTEGER NOT NULL DEFAULT 0,
             articles_updated INTEGER NOT NULL DEFAULT 0,
+            articles_processed INTEGER NOT NULL DEFAULT 0,
+            articles_failed INTEGER NOT NULL DEFAULT 0,
             source_results TEXT NOT NULL DEFAULT '{}',
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -150,6 +162,22 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_pipeline_status ON pipeline_runs(status);
         CREATE INDEX IF NOT EXISTS idx_pipeline_started ON pipeline_runs(started_at);
     """)
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns that databases created before this change lack."""
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(processed_articles)")}
+    if "error" not in columns:
+        conn.execute("ALTER TABLE processed_articles ADD COLUMN error TEXT")
+
+    run_columns = {row[1] for row in conn.execute("PRAGMA table_info(pipeline_runs)")}
+    for column in ("articles_processed", "articles_failed"):
+        if column not in run_columns:
+            conn.execute(
+                f"ALTER TABLE pipeline_runs ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0"
+            )
+
+    conn.commit()
 
 
 def _init_sources(conn: sqlite3.Connection) -> None:
@@ -170,7 +198,7 @@ def _init_sources(conn: sqlite3.Connection) -> None:
         (
             "hn",
             "Hacker News",
-            "https://hn.algolia.com/api/v1/search?tags=story&dateRange=past24hours",
+            "https://hn.algolia.com/api/v1/search_by_date?query=AI&tags=story&hitsPerPage=30",
             "api",
         ),
     ]
@@ -226,7 +254,7 @@ def get_all_articles() -> list[Article]:
         SELECT a.id, a.source_url, a.source_name, a.source, a.raw_title,
                a.raw_description, a.published_at, a.fetched_at, a.language,
                pa.headline_zh, pa.summary_zh, pa.category,
-               pa.importance_score, pa.generation_status
+               pa.importance_score, pa.generation_status, pa.error
         FROM articles a
         LEFT JOIN processed_articles pa ON a.id = pa.article_id
         ORDER BY a.fetched_at DESC
@@ -242,7 +270,7 @@ def get_articles_by_date(date_str: str) -> list[Article]:
         SELECT a.id, a.source_url, a.source_name, a.source, a.raw_title,
                a.raw_description, a.published_at, a.fetched_at, a.language,
                pa.headline_zh, pa.summary_zh, pa.category,
-               pa.importance_score, pa.generation_status
+               pa.importance_score, pa.generation_status, pa.error
         FROM articles a
         LEFT JOIN processed_articles pa ON a.id = pa.article_id
         WHERE date(a.fetched_at) = ?
@@ -261,7 +289,7 @@ def get_article_by_id(article_id: str) -> Optional[Article]:
         SELECT a.id, a.source_url, a.source_name, a.source, a.raw_title,
                a.raw_description, a.published_at, a.fetched_at, a.language,
                pa.headline_zh, pa.summary_zh, pa.category,
-               pa.importance_score, pa.generation_status
+               pa.importance_score, pa.generation_status, pa.error
         FROM articles a
         LEFT JOIN processed_articles pa ON a.id = pa.article_id
         WHERE a.id = ?
@@ -287,6 +315,7 @@ def _row_to_article(row: sqlite3.Row) -> Article:
         category=row["category"] or "general",
         importance_score=row["importance_score"] or 0,
         generation_status=row["generation_status"] or "pending",
+        error=row["error"],
     )
 
     article = Article(
@@ -300,7 +329,7 @@ def _row_to_article(row: sqlite3.Row) -> Article:
         fetched_at=fetched_at,
         language=row["language"] or "en",
     )
-    article.__processed__ = processed
+    article.processed = processed
     return article
 
 
@@ -318,8 +347,8 @@ def upsert_processed_article(processed: ProcessedArticle) -> None:
         INSERT OR REPLACE INTO processed_articles
             (id, article_id, headline_zh, summary_zh, why_it_matters_zh,
              category, tags, importance_score, source_confidence,
-             related_entities, generated_at, generation_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             related_entities, generated_at, generation_status, error)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
         (
             processed.id,
@@ -334,6 +363,7 @@ def upsert_processed_article(processed: ProcessedArticle) -> None:
             entities_json,
             processed.generated_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             processed.generation_status,
+            processed.error,
         ),
     )
     conn.commit()
@@ -379,8 +409,8 @@ def get_daily_brief(date_str: str) -> Optional[DailyBrief]:
         id=row["id"],
         date=row["date"],
         trend_summary=row["trend_summary"],
-        highlights=json.loads(row["highlights"]),
-        dev_focus=json.loads(row["dev_focus"]),
+        highlights=_json_column(row["highlights"], []),
+        dev_focus=_json_column(row["dev_focus"], []),
         generation_status=row["generation_status"],
     )
 
@@ -397,8 +427,9 @@ def create_pipeline_run(run: PipelineRun) -> str:
         """
         INSERT OR REPLACE INTO pipeline_runs
             (id, started_at, completed_at, status, articles_fetched,
-             articles_new, articles_updated, source_results)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             articles_new, articles_updated, articles_processed, articles_failed,
+             source_results)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
         (
             run.id,
@@ -410,6 +441,8 @@ def create_pipeline_run(run: PipelineRun) -> str:
             run.articles_fetched,
             run.articles_new,
             run.articles_updated,
+            run.articles_processed,
+            run.articles_failed,
             source_results_json,
         ),
     )
@@ -435,7 +468,9 @@ def get_latest_pipeline_run() -> Optional[PipelineRun]:
         articles_fetched=row["articles_fetched"],
         articles_new=row["articles_new"],
         articles_updated=row["articles_updated"],
-        source_results=json.loads(row["source_results"]),
+        articles_processed=row["articles_processed"],
+        articles_failed=row["articles_failed"],
+        source_results=_json_column(row["source_results"], {}),
     )
 
 

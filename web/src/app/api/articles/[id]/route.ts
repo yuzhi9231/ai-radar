@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { parseJsonArray } from "@/lib/parse";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -18,7 +19,7 @@ export async function GET(
         a.id, a.source_url, a.source_name, a.source,
         a.raw_title, a.raw_description, a.published_at, a.fetched_at, a.language,
         pa.headline_zh, pa.summary_zh, pa.why_it_matters_zh, pa.category,
-        pa.tags, pa.importance_score, pa.generation_status
+        pa.tags, pa.importance_score, pa.generation_status, pa.error
       FROM articles a
       LEFT JOIN processed_articles pa ON a.id = pa.article_id
       WHERE a.id = ?
@@ -31,7 +32,7 @@ export async function GET(
 
 		const article = {
 			...row,
-			tags: row.tags ? JSON.parse(row.tags) : [],
+			tags: parseJsonArray(row.tags),
 			source: row.source as string,
 		};
 

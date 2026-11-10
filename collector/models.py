@@ -56,6 +56,9 @@ class Article(BaseModel):
     )
     fetched_at: datetime = Field(default_factory=datetime.utcnow)
     language: str = Field(default="en", description="Detected language code")
+    processed: Optional["ProcessedArticle"] = Field(
+        default=None, description="AI processing result, when loaded together"
+    )
 
     def __hash__(self) -> int:
         return hash(self.source_url)
@@ -76,6 +79,9 @@ class ProcessedArticle(BaseModel):
     related_entities: list[str] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     generation_status: str = "pending"  # pending | success | failed
+    error: Optional[str] = Field(
+        default=None, description="Why generation failed, when status is 'failed'"
+    )
 
 
 class Cluster(BaseModel):
@@ -110,5 +116,11 @@ class PipelineRun(BaseModel):
     articles_fetched: int = 0
     articles_new: int = 0
     articles_updated: int = 0
+    articles_processed: int = Field(
+        default=0, description="Articles the AI layer actually analysed"
+    )
+    articles_failed: int = Field(
+        default=0, description="Articles stored but not analysed (AI failure)"
+    )
     source_results: dict[str, dict] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
