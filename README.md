@@ -90,6 +90,14 @@ DATABASE_URL=file:G:/data/ai-radar.db
 ```
 
 
+### 手动触发
+
+打开网页不会触发采集：web 只读 SQLite，采集是另一个进程。想立刻跑一次：
+
+- 网页上点「跑一次」按钮（文章列表上方）。它调用 `POST /api/run`，由 Next.js 进程执行 `python -m collector.cli run`。这只在 collector 和 web 位于同一台机器时有效，同一时间只允许一个运行；Python 路径可用 `COLLECTOR_PYTHON` 指定。
+- 命令行：`python -m collector.cli run`，重跑失败行用 `python -m collector.cli reprocess --limit N`。
+- 定时：`python -m collector.cli schedule`（10:00 / 15:00 Asia/Singapore），进程需要一直开着。
+
 ## 开发
 
 ### 本地开发（不使用 Docker）
