@@ -19,9 +19,15 @@ AI_PROVIDER = os.environ.get("AI_PROVIDER", "ollama").lower()
 # AI_BASE_URL / AI_MODEL / AI_TIMEOUT are the canonical names because the AI layer is
 # any OpenAI-compatible server, not necessarily Ollama. The OLLAMA_* names are still
 # read as fallbacks so existing .env files and docker-compose setups keep working.
-AI_BASE_URL = os.environ.get("AI_BASE_URL") or os.environ.get("OLLAMA_BASE_URL", "http://ollama:11434")
-AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get("OLLAMA_MODEL", "qwen3.6-35b-a3b-ud-q4_k_m")
-AI_TIMEOUT = int(os.environ.get("AI_TIMEOUT") or os.environ.get("OLLAMA_TIMEOUT", "120"))
+AI_BASE_URL = os.environ.get("AI_BASE_URL") or os.environ.get(
+    "OLLAMA_BASE_URL", "http://ollama:11434"
+)
+AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get(
+    "OLLAMA_MODEL", "qwen3.6-35b-a3b-ud-q4_k_m"
+)
+AI_TIMEOUT = int(
+    os.environ.get("AI_TIMEOUT") or os.environ.get("OLLAMA_TIMEOUT", "120")
+)
 # Reasoning models need headroom beyond the answer itself
 AI_MAX_TOKENS = int(os.environ.get("AI_MAX_TOKENS", "2000"))
 USE_MOCK_AI = os.environ.get("USE_MOCK_AI", "false").lower() == "true"
